@@ -15,6 +15,7 @@ function HomePage() {
                     <a href="#">Rentals</a>
                     <a href="#">Offers</a>
                     <a href="#">Help</a>
+                    <a href="#">Contact</a>
                 </nav>
                 <button className="login-btn">Login / Signup</button>
             </header>
