@@ -5,20 +5,7 @@ function HomePage() {
     const [value, setValue] = useState("");
     return (
         <div className="homepage">
-            
-            {/* Header */}
-            <header className="NavBar">
-                <div className="logo">🚖 SARTHI</div>
-                <nav className="nav-links">
-                    <a href="#">Home</a>
-                    <a href="#">Rides</a>
-                    <a href="#">Rentals</a>
-                    <a href="#">Offers</a>
-                    <a href="#">Help</a>
-                    <a href="#">Contact</a>
-                </nav>
-                <button className="login-btn">Login / Signup</button>
-            </header>
+           
 
             {/* Hero Section */}
             <section className="hero">
