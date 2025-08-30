@@ -499,7 +499,19 @@ section {
   background: linear-gradient(rgba(240, 244, 248, 0.8), rgba(240, 244, 248, 0.8)), url('https://images.unsplash.com/photo-1549909249-14a5160868f7?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D') no-repeat center center/cover;
   position: relative;
   text-align: center;
+  overflow: hidden;
 }
+
+.hero-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* makes sure image covers hero area */
+  z-index: 0;
+}
+
 
 .hero-content {
   position: relative;
@@ -510,6 +522,7 @@ section {
 }
 
 .hero-content h1 {
+  margin-top: 1%;
   font-size: clamp(2.5em, 5vw, 4em);
   color: var(--dark-bg-color);
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.05);
@@ -522,7 +535,7 @@ section {
 }
 
 .booking-box {
-  background-color: rgba(255, 255, 255, 0.95);
+  background-image: radial-gradient(circle, lightblue, rgb(181, 181, 226));
   backdrop-filter: blur(5px);
   border-radius: var(--border-radius);
   padding: 30px;
@@ -545,6 +558,7 @@ section {
   font-size: 1em;
   transition: all 0.3s ease;
   background-color: #fefefe;
+  color: #333;
 }
 
 .booking-box input:focus,
@@ -625,6 +639,8 @@ h2::after {
 .features div:hover, .card:hover, .review:hover {
   transform: translateY(-5px);
 }
+
+
 
 .service-cards .card {
   background-color: #fff;
@@ -746,5 +762,9 @@ h2::after {
 
   section {
     padding: 50px 5%;
+  }
+  .select{
+    color: black;
+    
   }
 }

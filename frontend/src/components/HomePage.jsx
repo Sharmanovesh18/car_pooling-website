@@ -22,9 +22,15 @@ function HomePage() {
 
             {/* Hero Section */}
             <section className="hero">
+                <img
+  src="Car1.jpg"
+  alt="Car on the road"
+  className="hero-image"
+/>
+
                 <div className="hero-content">
                     <h1>Book a ride, rent a car, or go outstation</h1>
-                    <p>Your trusted travel companion, anytime, anywhere 🚀</p>
+                    <p><b>Your trusted travel companion, anytime, anywhere 🚀</b></p>
                     <div className="booking-box">
                         <input type="text" placeholder="Pickup Location" />
                         <input type="text" placeholder="Drop Location" />
@@ -39,7 +45,7 @@ function HomePage() {
         <option value="later">Schedule Later</option>
       </select>
 
-      <p>Selected: {value}</p>
+      <p ><b>Selected: {value}</b></p>
 
                         <button className="search-btn">Search Ride</button>
                     </div>
@@ -59,14 +65,14 @@ function HomePage() {
 
             {/* Services Section */}
             <section className="services">
-                <h2>Our Services</h2>
-                <div className="service-cards">
-                    <div className="card">🚕 City Rides</div>
-                    <div className="card">🚌 Outstation Travel</div>
-                    <div className="card">🚗 Car Rentals</div>
-                    <div className="card">📦 Parcel Delivery</div>
-                </div>
-            </section>
+  <h2>Our Services</h2>
+  <div className="service-cards">
+    <div className="card">🚕 City Rides</div>
+    <div className="card">🚌 Outstation Travel</div>
+    <div className="card">🚗 Car Rentals</div>
+    <div className="card">📦 Parcel Delivery</div>
+  </div>
+</section>
 
             {/* Testimonials */}
             <section className="testimonials">
