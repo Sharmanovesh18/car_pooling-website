@@ -4,7 +4,9 @@ import "./Navbar.css"; // we’ll make a separate css for navbar
 function Navbar() {
   return (
     <header className="NavBar">
-      <div className="logo">🚖 SARTHI</div>
+       <div className="logo">
+        <img src="logo.jpg" alt="Sarthi Logo" className="logo-img" />
+      </div>
       <nav className="nav-links">
         <a href="#">Home</a>
         <a href="#">Rides</a>
