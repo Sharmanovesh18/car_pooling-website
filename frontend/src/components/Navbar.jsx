@@ -1,5 +1,8 @@
 import React from "react";
-import "./Navbar.css"; // we’ll make a separate css for navbar
+import { Link } from "react-router-dom";
+import "./Navbar.css"; 
+import DashBoard from "./DashBoard";
+
 
 function Navbar() {
   return (
@@ -8,12 +11,12 @@ function Navbar() {
         <img src="logo.jpg" alt="Sarthi Logo" className="logo-img" />
       </div>
       <nav className="nav-links">
-        <a href="#">Home</a>
-        <a href="#">Rides</a>
-        <a href="#">Rentals</a>
-        <a href="#">Offers</a>
-        <a href="#">Help</a>
-        <a href="#">Contact</a>
+        <Link to="/">Home</Link>
+        <Link to="/dashboard">Rides</Link>
+        <Link to="#">Rentals</Link>
+        <Link to="#">Offers</Link>
+        <Link to="#">Help</Link>
+        <Link to="#">Contact</Link>
       </nav>
       <button className="login-btn">Login / Signup</button>
     </header>
