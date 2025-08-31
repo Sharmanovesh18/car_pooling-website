@@ -138,7 +138,7 @@ const DashBoard = () => {
                   {ride.rating && (
                     <span className="driver-rating">★ {ride.rating}</span>
                   )}
-                  <span className="booking-type">⚡ {ride.bookingType}</span>
+                  <span className="booking-type"> ⚡ {ride.bookingType}</span>
                   <button
                     disabled={ride.booked}
                     onClick={() => handleBook(ride._id)}
