@@ -21,6 +21,7 @@ function HomePage() {
                     <div className="booking-box">
                         <input type="text" placeholder="Pickup Location" />
                         <input type="text" placeholder="Drop Location" />
+                        <input type="text" placeholder="No of passengers" />
                         <select 
         value={value} 
         onChange={(e) => setValue(e.target.value)}

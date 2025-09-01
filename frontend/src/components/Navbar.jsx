@@ -14,7 +14,7 @@ function Navbar() {
       <nav className="nav-links">
         <Link to="/">Home</Link>
         <Link to="/dashboard">Rides</Link>
-        <Link to="#">Rentals</Link>
+        <Link to="/reviews">Reviews</Link>
         <Link to="#">Offers</Link>
         <Link to="#">Help</Link>
         <Link to="#">Contact</Link>

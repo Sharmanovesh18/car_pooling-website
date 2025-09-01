@@ -6,8 +6,11 @@
   background-color: rgba(215, 215, 221, 0.95);
   backdrop-filter: blur(10px);
   box-shadow: 0 2px 10px rgba(186, 56, 56, 0.05);
-  position: sticky;
+  
+  position: fixed;   /* ✅ change sticky → fixed */
   top: 0;
+  left: 0;
+  width: 100%;       /* ✅ make it span full width */
   z-index: 1000;
   color: #171515;
   height: 100px;
