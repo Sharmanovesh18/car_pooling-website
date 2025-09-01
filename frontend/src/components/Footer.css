@@ -1,0 +1,147 @@
+/* ================================
+   Footer Styles - SAARTHI Project
+   ================================ */
+.footer {
+  background-color: #c4dcf5;
+  color: #0c0c0c;
+  padding: 60px 20px;
+  font-family: Arial, sans-serif;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.grid {
+  display: grid;
+  gap: 40px;
+}
+
+.grid--footer {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  align-items: start;
+}
+
+.logo {
+  width: 140px;
+  height: auto;
+  border-radius: 12px;
+}
+
+.logo-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.footer-logo {
+  margin-bottom: 1.5rem;
+  display: inline-block;
+}
+
+.social-links {
+  list-style: none;
+  display: flex;
+  gap: 20px;
+  padding: 0;
+  margin-top: 10px;
+}
+
+.social-icons {
+  font-size: 28px;
+  color: #0c0c0c;
+  transition: color 0.3s ease, transform 0.2s ease;
+  cursor: pointer;
+}
+
+.social-icons:hover {
+  color: #130c01; /* Accent yellow */
+  transform: scale(1.1);
+}
+
+.footer-h {
+  /* margin-top: 10px; */
+
+  font-size: 50px;
+  line-height: 1.2;
+
+  font-weight: 600;
+  margin-bottom: 20px;
+  font-family: Arial, sans-serif;
+  color: #161616;
+}
+
+.footer-nav {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-nav li {
+  margin-bottom: 10px;
+}
+
+.footer-link {
+  color: #171616;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color 0.3s ease;
+}
+
+.footer-link:hover {
+  color: #4d9ae7;
+}
+
+.address-col .address {
+  margin-bottom: 12px;
+  line-height: 1.6;
+  font-size: 0.95rem;
+  color: #171616;
+}
+
+.contact a {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.95rem;
+}
+
+.copyright {
+  margin-top: 25px;
+  text-align: start;
+  font-size: 0.85rem;
+  color: #151414;
+  line-height: 1.4;
+}
+
+/* ================================
+   Responsive Styles
+   ================================ */
+@media (max-width: 768px) {
+  .footer {
+    padding: 40px 15px;
+  }
+
+  .footer-heading {
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+  }
+
+  .social-icons {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .grid--footer {
+    grid-template-columns: 1fr;
+  }
+
+  .logo {
+    width: 120px;
+  }
+
+  .social-links {
+    gap: 15px;
+  }
+}

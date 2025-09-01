@@ -9,6 +9,7 @@ function Navbar() {
     <header className="NavBar">
        <div className="logo">
         <img src="logo.jpg" alt="Sarthi Logo" className="logo-img" />
+        <span className="logo-text">SAARTHI</span>
       </div>
       <nav className="nav-links">
         <Link to="/">Home</Link>

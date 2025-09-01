@@ -77,14 +77,7 @@ function HomePage() {
             </section>
 
             {/* Footer */}
-            <footer className="footer">
-                <div className="footer-links">
-                    <a href="#">About Us</a>
-                    <a href="#">Privacy Policy</a>
-                    <a href="#">Terms & Conditions</a>
-                </div>
-                <p>© 2025 Sarthi. All rights reserved.</p>
-            </footer>
+            
         </div>
     );
 }

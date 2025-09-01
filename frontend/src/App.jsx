@@ -4,6 +4,7 @@ import Navbar from "./components/Navbar";
 import HomePage from "./components/HomePage";
 import Loader from "./components/Loader";
 import DashBoard from "./components/DashBoard";
+import Footer from "./components/Footer";
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -15,19 +16,24 @@ function App() {
 
   return (
     <div className="App">
-      <Router>
-        <nav>
-          <Navbar />
-        </nav>
-        {loading ? (
-          <Loader />
-        ) : (
+      {loading ? (
+        // ✅ Show ONLY Loader during loading
+        <Loader />
+      ) : (
+        // ✅ Show Navbar + Routes + Footer AFTER loading
+        <Router>
+          <nav>
+            <Navbar />
+          </nav>
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/dashboard" element={<DashBoard />} />
           </Routes>
-        )}
-      </Router>
+          <footer>
+            <Footer />
+          </footer>
+        </Router>
+      )}
     </div>
   );
 }
