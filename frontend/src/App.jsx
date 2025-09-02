@@ -6,6 +6,8 @@ import Loader from "./components/Loader";
 import DashBoard from "./components/DashBoard";
 import Footer from "./components/Footer";
 import ReviewPage from "./components/ReviewPage"; // ✅ Import ReviewPage
+import Login from "./components/Login";
+import Register from "./components/Register";
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -29,6 +31,8 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/dashboard" element={<DashBoard />} />
             <Route path="/reviews" element={<ReviewPage />} /> {/* ✅ Added Review Page */}
+             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
           </Routes>
           
           <Footer />

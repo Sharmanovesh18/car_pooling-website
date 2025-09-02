@@ -19,7 +19,9 @@ function Navbar() {
         <Link to="#">Help</Link>
         <Link to="#">Contact</Link>
       </nav>
-      <button className="login-btn">Login / Signup</button>
+       <Link to="/login">
+        <button className="login-btn">Login / Signup</button>
+      </Link>
     </header>
   );
 }
