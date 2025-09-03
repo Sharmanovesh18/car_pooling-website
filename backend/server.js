@@ -4,6 +4,7 @@ import cors from "cors";
 import rideRoutes from "./src/routes/rideRoutes.js";
 import bookingRoutes from "./src/routes/bookingRoutes.js";
 import dotenv from "dotenv";
+import authRoutes from './src/routes/auth.js';
 
 dotenv.config();
 
@@ -19,6 +20,8 @@ mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTop
 // Routes
 app.use("/api/rides", rideRoutes);
 app.use("/api/bookings", bookingRoutes);
+app.use('/api/auth', authRoutes);
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
