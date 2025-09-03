@@ -1,11 +1,9 @@
-/* ================================
-   Footer Styles - SAARTHI Project
-   ================================ */
 .footer {
   background-color: #c4dcf5;
   color: #0c0c0c;
   padding: 60px 20px;
   font-family: Arial, sans-serif;
+  margin-top: 100px;
 }
 
 .container {
@@ -56,12 +54,12 @@
 }
 
 .social-icons:hover {
-  color: #130c01; /* Accent yellow */
+  color: #130c01; 
   transform: scale(1.1);
 }
 
 .footer-h {
-  /* margin-top: 10px; */
+ 
 
   font-size: 50px;
   line-height: 1.2;
@@ -114,9 +112,6 @@
   line-height: 1.4;
 }
 
-/* ================================
-   Responsive Styles
-   ================================ */
 @media (max-width: 768px) {
   .footer {
     padding: 40px 15px;

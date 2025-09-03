@@ -24,17 +24,22 @@ function App() {
 
   return (
     <Router>
-      <Navbar />  
+      {/* Fixed Navbar */}
+      <Navbar />
 
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/dashboard" element={<DashBoard />} />
-        <Route path="/reviews" element={<ReviewPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-      </Routes>
+      {/* ✅ Wrapper to prevent overlap with fixed Navbar */}
+      <main style={{ paddingTop: "110px", minHeight: "80vh" }}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/dashboard" element={<DashBoard />} />
+          <Route path="/reviews" element={<ReviewPage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+        </Routes>
+      </main>
 
-      <Footer />   
+      {/* Footer always at bottom */}
+      <Footer />
     </Router>
   );
 }
