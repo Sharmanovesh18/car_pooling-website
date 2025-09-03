@@ -1,29 +1,26 @@
 import mongoose from "mongoose";
 
-const BookingSchema = new mongoose.Schema(
-  {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",        // optional if you add real auth
-      required: true
-    },
-    start: { type: String, required: true, trim: true },
-    destination: { type: String, required: true, trim: true },
-    date: { type: String, required: true }, // UI date string (e.g., "2025-09-01")
-    time: { type: String, required: true }, // UI time string (e.g., "14:30")
-    // optional fields your UI may show on cards:
-    vehicleType: { type: String, default: "Sedan" },
-    driverName: { type: String, default: "Auto-Assigned" },
-    fare: { type: Number, default: 0 },
-    status: {
-      type: String,
-      enum: ["booked", "ongoing", "completed", "cancelled"],
-      default: "booked"
-    }
+const passengerSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  name: String
+}, { _id: false });
+
+const bookingSchema = new mongoose.Schema({
+  rideId: { type: mongoose.Schema.Types.ObjectId, ref: "Ride" },
+  driver: {
+    name: String,
+    phone: String,
+    rating: Number
   },
-  { timestamps: true }
-);
+  start: String,
+  destination: String,
+  date: String,
+  time: String,
+  fare: Number,
+  paymentMethod: String,
+  passengers: [passengerSchema], // first is the rider who booked
+  createdAt: { type: Date, default: Date.now },
+  status: { type: String, default: "confirmed" } // e.g., confirmed, cancelled
+});
 
-BookingSchema.index({ userId: 1, createdAt: -1 });
-
-export const Booking = mongoose.model("Booking", BookingSchema);
+export default mongoose.model("Booking", bookingSchema);

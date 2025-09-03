@@ -5,6 +5,8 @@ import Navbar from "./components/Navbar";
 import HomePage from "./components/HomePage";
 import Loader from "./components/Loader";
 import DashBoard from "./components/DashBoard";
+import { ErrorBoundary } from 'react-error-boundary';
+import ErrorFallback from "./components/ErrorFallback";
 import Footer from "./components/Footer";
 import ReviewPage from "./components/ReviewPage";
 import Login from "./components/Login";
@@ -31,7 +33,11 @@ function App() {
       <main style={{ paddingTop: "110px", minHeight: "80vh" }}>
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/dashboard" element={<DashBoard />} />
+            <Route path="/dashboard" element={
+              <ErrorBoundary FallbackComponent={ErrorFallback}>
+                <DashBoard />
+              </ErrorBoundary>
+            } />
           <Route path="/reviews" element={<ReviewPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />

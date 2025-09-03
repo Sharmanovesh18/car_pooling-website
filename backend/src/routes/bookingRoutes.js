@@ -1,35 +1,19 @@
-import { Router } from "express";
+import express from "express";
 import {
   createBooking,
-  getHistoryByUser,
-  getBookingById,
-  cancelBooking
+  shareRide,
+  bookingHistory
 } from "../controllers/bookingController.js";
 
-const router = Router();
+const router = express.Router();
 
-/**
- * POST /api/bookings
- * body: { userId, start, destination, date, time, vehicleType?, driverName?, fare? }
- */
+// POST /api/bookings
 router.post("/", createBooking);
 
-/**
- * GET /api/bookings/:userId
- * returns booking history for user
- */
-router.get("/:userId", getHistoryByUser);
+// POST /api/bookings/:bookingId/share  { userId }
+router.post("/:bookingId/share", shareRide);
 
-/**
- * GET /api/bookings/one/:id
- * returns a single booking
- */
-router.get("/one/:id", getBookingById);
-
-/**
- * PATCH /api/bookings/:id/cancel
- * cancel a booking
- */
-router.patch("/:id/cancel", cancelBooking);
+// GET /api/bookings/history/:userId
+router.get("/history/:userId", bookingHistory);
 
 export default router;
