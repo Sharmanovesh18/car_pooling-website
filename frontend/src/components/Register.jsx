@@ -10,50 +10,36 @@ function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    // Check if passwords match
-    if (password !== confirmPassword) {
-      alert("Passwords do not match!");
-       setName("");
-    setEmail("");
-    setPassword("");
-    setConfirmPassword("");
-      return;
-      return;
-    }
+  if (password !== confirmPassword) {
+    alert("Passwords do not match!");
+    return;
+  }
 
-    // Get existing users from localStorage
-    const users = JSON.parse(localStorage.getItem("users")) || [];
+  try {
+    const res = await fetch("http://localhost:5000/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, password }),
+    });
 
-    // Check if email already exists
-    const userExists = users.some((user) => user.email === email);
-    if (userExists) {
-      alert("This email is already registered. Please login!");
-      setName("");
-    setEmail("");
-    setPassword("");
-    setConfirmPassword("");
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Registration failed");
       return;
     }
 
-    // Add new user
-    const newUser = { name, email, password };
-    users.push(newUser);
-    localStorage.setItem("users", JSON.stringify(users));
-
-    alert(`User ${name} registered successfully!`);
-
-    // Clear form
-    setName("");
-    setEmail("");
-    setPassword("");
-    setConfirmPassword("");
-
-    // Navigate to login page
+    alert("User registered successfully!");
     navigate("/login");
-  };
+  } catch (error) {
+    console.error("Register error:", error);
+    alert("Something went wrong");
+  }
+};
+
 
   return (
     <div>

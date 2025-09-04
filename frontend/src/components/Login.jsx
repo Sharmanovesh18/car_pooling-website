@@ -3,35 +3,38 @@ import { Link, useNavigate } from "react-router-dom";
 import "./Auth.css";
 
 function Login() {
-  const [email, setEmail] = useState("");
+    const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const users = JSON.parse(localStorage.getItem("users")) || [];
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-    const user = users.find(
-      (user) => user.email === email && user.password === password
-    );
+      const data = await res.json();
 
-    if (user) {
-      localStorage.setItem("currentUser", JSON.stringify(user));
+      if (!res.ok) {
+        alert(data.message || "Login failed, try again");
+        return;
+      }
 
-      window.dispatchEvent(new Event("auth-changed"));
+      alert("Login successful!");
+      // Save user info to localStorage (optional)
+      localStorage.setItem("user", JSON.stringify(data.user));
 
-      alert(`Logged in successfully! Welcome, ${user.name}`);
-
-      setEmail("");
-      setPassword("");
-
+      // Navigate to home page
       navigate("/");
-    } else {
-      alert("Invalid email or password!");
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("Something went wrong");
     }
   };
-
   return (
     <div>
       <div className="auth-container">

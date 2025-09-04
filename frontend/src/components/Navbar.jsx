@@ -45,6 +45,7 @@ function Navbar() {
         <Link to="#">Offers</Link>
         <Link to="#">Help</Link>
         <Link to="#">Contact</Link>
+        <Link to="/location">Location</Link>
       </nav>
 
       {currentUser ? (

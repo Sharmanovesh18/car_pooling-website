@@ -11,6 +11,7 @@ import Footer from "./components/Footer";
 import ReviewPage from "./components/ReviewPage";
 import Login from "./components/Login";
 import Register from "./components/Register";
+import Location from "./components/MapPage";
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -41,6 +42,7 @@ function App() {
           <Route path="/reviews" element={<ReviewPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/location" element={<Location />} />
         </Routes>
       </main>
 
