@@ -73,9 +73,9 @@ function HomePage() {
             </section>
 
             {/* Offer Section */}
-            <section className="offer">
+            {/* <section className="offer">
                 <h3>🎁 25% OFF on First Ride</h3>
-            </section>
+            </section> */}
 
             {/* Footer */}
             

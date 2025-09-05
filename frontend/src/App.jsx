@@ -12,6 +12,9 @@ import ReviewPage from "./components/ReviewPage";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import Location from "./components/MapPage";
+import ChatSupport from "./components/Chatbot"; // Import ChatSupport component
+import CtaStyles from "./components/Download"; // Import CTA styles
+import DiscountCTA from "./components/Animation";
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -45,8 +48,12 @@ function App() {
           <Route path="/location" element={<Location />} />
         </Routes>
       </main>
+      {/* Chat Support always at bottom right */}
+      <ChatSupport />
 
+      {/* <CtaStyles /> */}
       {/* Footer always at bottom */}
+      <DiscountCTA />
       <Footer />
     </Router>
   );
