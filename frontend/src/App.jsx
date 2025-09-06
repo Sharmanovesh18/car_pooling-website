@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
 import HomePage from "./components/HomePage";
@@ -12,9 +12,42 @@ import ReviewPage from "./components/ReviewPage";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import Location from "./components/MapPage";
-import ChatSupport from "./components/Chatbot"; // Import ChatSupport component
-import CtaStyles from "./components/Download"; // Import CTA styles
+import ChatSupport from "./components/Chatbot"; 
+import CtaStyles from "./components/Download"; 
 import DiscountCTA from "./components/Animation";
+
+// ✅ Layout wrapper
+function Layout({ children }) {
+  const location = useLocation();
+
+  // Pages where Footer & CTA should be hidden
+  const hideFooterAndCTA = ["/login", "/register", "/reviews", "/location"];
+
+  const shouldHide = hideFooterAndCTA.includes(location.pathname);
+
+  return (
+    <>
+      {/* Fixed Navbar */}
+      <Navbar />
+
+      {/* ✅ Wrapper to prevent overlap with fixed Navbar */}
+      <main style={{ paddingTop: "110px", minHeight: "80vh" }}>
+        {children}
+      </main>
+
+      {/* Chat Support always visible */}
+      <ChatSupport />
+
+      {/* Footer + CTA only on allowed pages */}
+      {!shouldHide && (
+        <>
+          <DiscountCTA />
+          <Footer />
+        </>
+      )}
+    </>
+  );
+}
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -30,31 +63,20 @@ function App() {
 
   return (
     <Router>
-      {/* Fixed Navbar */}
-      <Navbar />
-
-      {/* ✅ Wrapper to prevent overlap with fixed Navbar */}
-      <main style={{ paddingTop: "110px", minHeight: "80vh" }}>
+      <Layout>
         <Routes>
           <Route path="/" element={<HomePage />} />
-            <Route path="/dashboard" element={
-              <ErrorBoundary FallbackComponent={ErrorFallback}>
-                <DashBoard />
-              </ErrorBoundary>
-            } />
+          <Route path="/dashboard" element={
+            <ErrorBoundary FallbackComponent={ErrorFallback}>
+              <DashBoard />
+            </ErrorBoundary>
+          } />
           <Route path="/reviews" element={<ReviewPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/location" element={<Location />} />
         </Routes>
-      </main>
-      {/* Chat Support always at bottom right */}
-      <ChatSupport />
-
-      {/* <CtaStyles /> */}
-      {/* Footer always at bottom */}
-      <DiscountCTA />
-      <Footer />
+      </Layout>
     </Router>
   );
 }
