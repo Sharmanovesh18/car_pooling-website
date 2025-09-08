@@ -35,7 +35,7 @@ const TimedRideCard = ({ ride, onBook, onShare }) => {
         <span className="car-icon">🚗</span>
         <span className="driver-avatar">
           {ride.driverImg ? (
-            <img src={ride.driverImg} alt={ride.driver} />
+             <img src={ride.driverImg} alt={typeof ride.driver === "object" ? ride.driver.name : ride.driver} />
           ) : (
             <span className="avatar-blank"></span>
           )}
@@ -45,13 +45,14 @@ const TimedRideCard = ({ ride, onBook, onShare }) => {
         </span>
         {ride.rating && <span className="driver-rating">★ {ride.rating}</span>}
         <span className="booking-type">⚡ {ride.bookingType}</span>
-        <button disabled={ride.booked} onClick={() => onBook(ride._id)}>
+        <button disabled={ride.booked || !ride._id} onClick={() => ride._id && onBook(ride)}>
           {ride.booked ? "Booked" : "Book"}
         </button>
         {/* ✅ Agree to share button */}
-        {ride.stops?.includes(ride.destination) && (
+        {ride._id && ride.stops?.includes(ride.destination) && (
           <button onClick={() => onShare(ride._id)}>Agree</button>
         )}
+
       </div>
     </div>
   );
@@ -90,11 +91,11 @@ const DashBoard = () => {
     setLoading(false);
   };
 
-  // ✅ show rides one by one with 10s gap
+  // ✅ show first ride immediately, then each subsequent ride after 10s
   useEffect(() => {
     if (rides.length > 0) {
-      setVisibleRides([]); // reset
-      let index = 0;
+      setVisibleRides([rides[0]]); // show first immediately
+      let index = 1;
       const interval = setInterval(() => {
         if (index < rides.length) {
           setVisibleRides((prev) => [...prev, rides[index]]);
@@ -109,29 +110,42 @@ const DashBoard = () => {
 
   const handleBook = async (ride) => {
     try {
+      let rideId = ride._id;
+      // If ride._id is missing (sample ride), create a new ride first
+      if (!rideId) {
+        const createRes = await axios.post("http://localhost:5000/api/rides/book", {
+          driver: ride.driver,
+          source: ride.source,
+          destination: ride.destination,
+          date: ride.date || date,
+          time: ride.time || time,
+        });
+        rideId = createRes.data.rideId;
+      }
       const res = await axios.post("http://localhost:5000/api/bookings", {
         userId: "66d30d3ad4b0c9241c9d4a11", // your logged in user id
-        start,
-        destination,
-        date,
-        time,
-        fare: ride.fare || 299,
-        driverName: ride.driver || "Auto-Assigned",
-        vehicleType: ride.vehicleType || "Sedan",
+        rideId,
+        start: ride.source,
+        destination: ride.destination,
+        date: ride.date || date,
+        time: ride.time || time,
+        fare: ride.fare,
+        driver: ride.driver,
+        distanceKm: ride.distanceKm,
       });
-
-      console.log("Booked:", res.data);
-      setBookingPopup(res.data.data); // show popup with booking details
-      setHistory((prev) => [...prev, res.data.data]);
+      setBookingPopup(res.data); // show popup with booking details
+      setHistory((prev) => [...prev, res.data]);
+      alert('Your ride is successfully booked!');
     } catch (err) {
       console.error("Booking failed:", err.response?.data || err.message);
+      alert('Booking failed. Please try again.');
     }
   };
 
   const fetchHistory = async () => {
     const userId = "66d30d3ad4b0c9241c9d4a11";
     const res = await axios.get(`http://localhost:5000/api/bookings/history/${userId}`);
-    setHistory(res.data.data);
+    setHistory(res.data.bookings);
   };
 
 
@@ -236,7 +250,7 @@ const DashBoard = () => {
               <div>No previous bookings.</div>
             ) : (
               history.map((ride, idx) => (
-                <div className="history-card" key={idx}>
+                <div className="history-card" key={ride._id || idx}>
                   <div>
                     <b>From:</b> {ride.source}
                   </div>
@@ -283,7 +297,7 @@ const DashBoard = () => {
                   <p>No co-passengers yet</p>
                 ) : (
                   sharedRide.passengers.map((p, idx) => (
-                    <p key={idx}>Passenger {idx + 1}</p>
+                    <p key={p._id || p.name || idx}>Passenger {idx + 1}</p>
                   ))
                 )}
               </div>
@@ -300,27 +314,17 @@ const DashBoard = () => {
               &times;
             </button>
             <h3>🎉 Ride Booked Successfully!</h3>
-            <div>
-              <b>From:</b> {bookingPopup.source}
-            </div>
-            <div>
-              <b>To:</b> {bookingPopup.destination}
-            </div>
-            <div>
-              <b>Fare:</b> {bookingPopup.fare}
-            </div>
-            <div>
-              <b>Driver:</b>{" "}
-              {typeof bookingPopup.driver === "object"
-                ? bookingPopup.driver.name
-                : bookingPopup.driver}
-            </div>
-            <div>
-              <b>Passengers:</b>
-            </div>
+            <div><b>From:</b> {bookingPopup.start}</div>
+            <div><b>To:</b> {bookingPopup.destination}</div>
+            <div><b>Date:</b> {bookingPopup.date}</div>
+            <div><b>Time:</b> {bookingPopup.time}</div>
+            <div><b>Fare:</b> {bookingPopup.fare}</div>
+            <div><b>Driver:</b> {bookingPopup.driver?.name || bookingPopup.driver}</div>
+            <div><b>Distance:</b> {bookingPopup.distanceKm ? `${bookingPopup.distanceKm} km` : 'N/A'}</div>
+            <div><b>Passengers:</b></div>
             {bookingPopup.passengers?.length ? (
               bookingPopup.passengers.map((p, idx) => (
-                <p key={idx}>Passenger {idx + 1}</p>
+                <p key={p._id || p.name || idx}>{p.name || `Passenger ${idx + 1}`}</p>
               ))
             ) : (
               <p>No other passengers yet.</p>

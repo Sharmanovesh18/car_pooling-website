@@ -1,3 +1,23 @@
+// Create a new ride (for booking sample rides)
+export const createRide = async (req, res) => {
+  try {
+    const { driver, source, destination, date, time } = req.body;
+    if (!source || !destination) {
+      return res.status(400).json({ error: "source and destination required" });
+    }
+    const newRide = await Ride.create({
+      driver,
+      source,
+      destination,
+      date,
+      time
+    });
+    return res.status(201).json({ rideId: newRide._id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to create ride" });
+  }
+};
 import Ride from "../models/Ride.js";
 import SearchLog from "../models/SearchLog.js";
 
