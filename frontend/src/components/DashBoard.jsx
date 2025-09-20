@@ -2,13 +2,13 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./DashBoard.css";
 
-const TimedRideCard = ({ ride, onBook, onShare }) => {
+const TimedRideCard = ({ ride, onBook, onShare, bookingRideId, bookingLoading }) => {
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-  const timer = setTimeout(() => setVisible(false), 2000); // hide after 10 sec
-  return () => clearTimeout(timer);
-}, []);
+    const timer = setTimeout(() => setVisible(false), 20000); // hide after 20 sec
+    return () => clearTimeout(timer);
+  }, []);
 
 
   if (!visible) return null;
@@ -45,9 +45,12 @@ const TimedRideCard = ({ ride, onBook, onShare }) => {
         </span>
         {ride.rating && <span className="driver-rating">★ {ride.rating}</span>}
         <span className="booking-type">⚡ {ride.bookingType}</span>
-        <button disabled={ride.booked || !ride._id} onClick={() => ride._id && onBook(ride)}>
-          {ride.booked ? "Booked" : "Book"}
+        <button
+          onClick={() => onBook(ride._id)} disabled={!onBook}
+        >
+          Book
         </button>
+
         {/* ✅ Agree to share button */}
         {ride._id && ride.stops?.includes(ride.destination) && (
           <button onClick={() => onShare(ride._id)}>Agree</button>
@@ -57,6 +60,7 @@ const TimedRideCard = ({ ride, onBook, onShare }) => {
     </div>
   );
 };
+
 
 const DashBoard = () => {
   const [start, setStart] = useState("");
@@ -71,6 +75,8 @@ const DashBoard = () => {
   const [shareOpen, setShareOpen] = useState(false);
   const [sharedRide, setSharedRide] = useState(null);
   const [bookingPopup, setBookingPopup] = useState(null); // ✅ new state
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [bookingRideId, setBookingRideId] = useState(null);
 
   const handleSearch = async () => {
     setLoading(true);
@@ -91,62 +97,48 @@ const DashBoard = () => {
     setLoading(false);
   };
 
-  // ✅ show first ride immediately, then each subsequent ride after 10s
+  // Show all matching rides at once
   useEffect(() => {
-    if (rides.length > 0) {
-      setVisibleRides([rides[0]]); // show first immediately
-      let index = 1;
-      const interval = setInterval(() => {
-        if (index < rides.length) {
-          setVisibleRides((prev) => [...prev, rides[index]]);
-          index++;
-        } else {
-          clearInterval(interval);
-        }
-      }, 10000);
-      return () => clearInterval(interval);
-    }
+    setVisibleRides(rides);
   }, [rides]);
 
-  const handleBook = async (ride) => {
+  const handleBook = async (rideId) => {
     try {
-      let rideId = ride._id;
-      // If ride._id is missing (sample ride), create a new ride first
-      if (!rideId) {
-        const createRes = await axios.post("http://localhost:5000/api/rides/book", {
-          driver: ride.driver,
-          source: ride.source,
-          destination: ride.destination,
-          date: ride.date || date,
-          time: ride.time || time,
-        });
-        rideId = createRes.data.rideId;
-      }
-      const res = await axios.post("http://localhost:5000/api/bookings", {
-        userId: "66d30d3ad4b0c9241c9d4a11", // your logged in user id
-        rideId,
-        start: ride.source,
-        destination: ride.destination,
-        date: ride.date || date,
-        time: ride.time || time,
-        fare: ride.fare,
-        driver: ride.driver,
-        distanceKm: ride.distanceKm,
+      const response = await fetch("http://localhost:5000/api/bookings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ rideId, userId: "12345" }) // userId must come from login/session
       });
-      setBookingPopup(res.data); // show popup with booking details
-      setHistory((prev) => [...prev, res.data]);
-      alert('Your ride is successfully booked!');
+
+      if (!response.ok) {
+        const text = await response.text();
+        alert("Booking failed: " + text);
+        return;
+      }
+
+      const data = await response.json();
+      alert("Ride booked successfully!");
     } catch (err) {
-      console.error("Booking failed:", err.response?.data || err.message);
-      alert('Booking failed. Please try again.');
+      console.error("Error booking:", err);
+      alert("Booking failed: " + err.message);
     }
   };
 
-  const fetchHistory = async () => {
-    const userId = "66d30d3ad4b0c9241c9d4a11";
-    const res = await axios.get(`http://localhost:5000/api/bookings/history/${userId}`);
-    setHistory(res.data.bookings);
-  };
+
+
+  const bookingHistory = async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const bookings = await Booking.find({ userId });
+    res.status(200).json(bookings);
+  } catch (err) {
+    console.error("Error fetching history:", err);
+    res.status(500).json({ error: "Failed to fetch booking history" });
+  }
+};
+
 
 
   // ✅ Handle Agree (Share Ride)
@@ -212,14 +204,19 @@ const DashBoard = () => {
           ) : visibleRides.length === 0 ? (
             <div>No rides found.</div>
           ) : (
-            visibleRides.map((ride) => (
-              <TimedRideCard
-                key={ride._id}
-                ride={ride}
-                onBook={handleBook}
-                onShare={handleShare}
-              />
-            ))
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'center' }}>
+              {visibleRides.slice(0, 3).map((ride) => (
+                <div style={{ flex: '0 1 300px', minWidth: 260, maxWidth: 340 }} key={ride._id || ride.driver?.name+ride.start+ride.destination}>
+                  <TimedRideCard
+                    ride={ride}
+                    onBook={handleBook}
+                    onShare={handleShare}
+                    bookingRideId={bookingRideId}
+                    bookingLoading={bookingLoading}
+                  />
+                </div>
+              ))}
+            </div>
           )}
         </div>
 
@@ -235,9 +232,11 @@ const DashBoard = () => {
         </div>
       </div>
 
-      <button className="history-btn" onClick={() => setHistoryOpen(true)}>
-        Show History
-      </button>
+      <div className="history-button-container" style={{ textAlign: 'center', margin: '16px 0' }}>
+        <button className="history-btn" onClick={() => setHistoryOpen(true)}>
+          Show History
+        </button>
+      </div>
 
       {historyOpen && (
         <div className="history-modal">

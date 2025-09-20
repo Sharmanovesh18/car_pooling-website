@@ -23,6 +23,7 @@ router.post("/", async (req, res) => {
     });
 
     res.json(resp.data);
+    console.log(resp.data);
   } catch (err) {
     console.error("❌ Directions error:", err.response?.data || err.message);
     res.status(500).json({

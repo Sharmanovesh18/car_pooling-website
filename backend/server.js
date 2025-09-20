@@ -5,10 +5,12 @@ import dotenv from "dotenv";
 import http from "http";
 import { Server } from "socket.io";
 
+
 import rideRoutes from "./src/routes/rideRoutes.js";
 import bookingRoutes from "./src/routes/bookingRoutes.js";
 import authRoutes from "./src/routes/auth.js";
 import directionsRouter from "./src/routes/directions.js";
+import driverRoutes from "./src/routes/driverRoutes.js";
 import Location from "./src/models/Location.js";  // ✅ add this if you have a Location model
 
 dotenv.config();
@@ -30,9 +32,10 @@ mongoose
 
 // ✅ API Routes
 app.use("/api/rides", rideRoutes);
-app.use("/api/bookings", bookingRoutes);
+app.use("/api", bookingRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/directions", directionsRouter);
+app.use("/api/drivers", driverRoutes);
 
 // ✅ Socket.io for live location
 io.on("connection", (socket) => {
