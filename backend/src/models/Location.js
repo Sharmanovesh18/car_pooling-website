@@ -1,13 +1,20 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const locationSchema = new mongoose.Schema({
-  userId: { type: String, required: true },
-  coords: {
-    lat: Number,
-    lng: Number,
-    accuracy: Number,
+  userId: {
+    type: String,
+    required: true,
+    unique: true
   },
-  updatedAt: { type: Date, default: Date.now },
+  coords: {
+    latitude: { type: Number, required: true },
+    longitude: { type: Number, required: true }
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  }
 });
 
-export default mongoose.model("Location", locationSchema);
+// Use a default export
+export default mongoose.model('Location', locationSchema);

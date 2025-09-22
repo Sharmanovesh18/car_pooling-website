@@ -4,14 +4,19 @@ import cors from "cors";
 import dotenv from "dotenv";
 import http from "http";
 import { Server } from "socket.io";
+import bcrypt from "bcryptjs"; // New import
+import jwt from "jsonwebtoken"; // New import
 
+// New imports for ride search/booking
+import localRides from "./src/data/localRides.js";
+import Ride from "./src/models/Ride.js";
+import Booking from "./src/models/Booking.js";
+import User from "./src/models/User.js";
 
+// Your existing imports
 import rideRoutes from "./src/routes/rideRoutes.js";
 import bookingRoutes from "./src/routes/bookingRoutes.js";
-import authRoutes from "./src/routes/auth.js";
-import directionsRouter from "./src/routes/directions.js";
-import driverRoutes from "./src/routes/driverRoutes.js";
-import Location from "./src/models/Location.js";  // ✅ add this if you have a Location model
+import Location from "./src/models/Location.js";
 
 dotenv.config();
 const app = express();
@@ -21,7 +26,7 @@ app.use(express.json());
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-// ✅ DB connection
+// DB connection
 mongoose
   .connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
@@ -30,41 +35,227 @@ mongoose
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ DB Error:", err));
 
-// ✅ API Routes
+// Initial data seeding function
+const seedData = async () => {
+  try {
+    await Ride.deleteMany({});
+    await Booking.deleteMany({});
+    await User.deleteMany({});
+    await Ride.insertMany(localRides);
+    console.log("✅ Database seeded with initial data.");
+
+    // Create a sample user for testing
+    const sampleUser = new User({
+      _id: "66d30d3ad4b0c9241c9d4a11",
+      name: "John Doe",
+      phone: "123-456-7890",
+    });
+    await sampleUser.save();
+    console.log("✅ Sample user created.");
+  } catch (err) {
+    console.error("❌ Error seeding data:", err);
+  }
+};
+
+// New: User registration route
+app.post("/api/auth/register", async (req, res) => {
+  const { name, email, phone, password } = req.body;
+  try {
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    const user = new User({
+      name,
+      email,
+      phone,
+      password: hashedPassword,
+    });
+    await user.save();
+    res.status(201).json({ message: "User registered successfully!" });
+  } catch (err) {
+    console.error("❌ Registration error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// New: User login route
+app.post("/api/auth/login", async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+    res.status(200).json({
+      message: "Login successful!",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+      token,
+    });
+  } catch (err) {
+    console.error("❌ Login error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// New: Middleware to protect routes (optional but recommended)
+const protect = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ message: "Not authorized, no token" });
+  }
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded.id;
+    next();
+  } catch (err) {
+    res.status(401).json({ message: "Not authorized, token failed" });
+  }
+};
+
+// New: Protected route to get user profile
+app.get("/api/auth/profile", protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.status(200).json(user);
+  } catch (err) {
+    console.error("❌ Profile fetch error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Search route
+app.get("/api/rides/search", async (req, res) => {
+  const { source, destination, date } = req.query;
+
+  const now = new Date();
+  const searchDate = date ? new Date(date) : null;
+
+  // Check if date is in the past
+  if (searchDate && searchDate < now.setHours(0, 0, 0, 0)) {
+    return res.status(200).json({
+      results: [],
+      message: "Cannot search for past dates.",
+    });
+  }
+
+  try {
+    const localMatches = localRides.filter((ride) => {
+      const isMatch =
+        ride.source.toLowerCase() === source.toLowerCase() &&
+        ride.destination.toLowerCase() === destination.toLowerCase() &&
+        (ride.date === date || !date);
+      return isMatch;
+    });
+
+    if (localMatches.length > 0) {
+      return res.status(200).json({ results: localMatches });
+    }
+
+    const query = {
+      source: { $regex: new RegExp(`^${source}$`, "i") },
+      destination: { $regex: new RegExp(`^${destination}$`, "i") },
+    };
+    if (date) {
+      query.date = date;
+    }
+
+    const dbRides = await Ride.find(query);
+
+    if (dbRides.length > 0) {
+      return res.status(200).json({ results: dbRides });
+    }
+
+    res.status(200).json({ results: [], message: "No rides found." });
+  } catch (err) {
+    console.error("❌ Error searching for rides:", err);
+    res.status(500).json({ error: "Failed to search for rides" });
+  }
+});
+
+// Book route
+app.post("/api/rides/book", async (req, res) => {
+  const { rideId, userId } = req.body;
+  try {
+    const ride = await Ride.findById(rideId);
+    const user = await User.findById(userId);
+
+    if (!ride) {
+      return res.status(404).send("Ride not found.");
+    }
+
+    if (!user) {
+      return res.status(404).send("User not found.");
+    }
+
+    if (ride.remainingSeats <= 0) {
+      return res.status(400).send("No seats available for this ride.");
+    }
+
+    ride.remainingSeats -= 1;
+    await ride.save();
+
+    const booking = new Booking({
+      userId,
+      rideId,
+      source: ride.source,
+      destination: ride.destination,
+      fare: ride.fare,
+      driver: {
+        name: ride.driver.name,
+        rating: ride.driver.rating,
+      },
+    });
+    await booking.save();
+
+    res.status(200).json({
+      message: "Ride booked successfully",
+      booking,
+      ride: {
+        source: ride.source,
+        destination: ride.destination,
+        fare: ride.fare,
+        driver: ride.driver,
+        remainingSeats: ride.remainingSeats,
+      },
+    });
+  } catch (err) {
+    console.error("❌ Error booking ride:", err);
+    res.status(500).send("Failed to book ride: " + err.message);
+  }
+});
+
+// Other API Routes
 app.use("/api/rides", rideRoutes);
 app.use("/api", bookingRoutes);
-app.use("/api/auth", authRoutes);
-app.use("/api/directions", directionsRouter);
-app.use("/api/drivers", driverRoutes);
 
-// ✅ Socket.io for live location
+// Socket.io for live location
 io.on("connection", (socket) => {
   console.log("🟢 Socket connected:", socket.id);
-
-  socket.on("auth", (data) => {
-    socket.data.userId = data?.userId || socket.id;
-    socket.join(socket.data.userId);
-    console.log(`User authenticated: ${socket.data.userId}`);
-  });
-
-  socket.on("myLocation", async (loc) => {
-    const userId = socket.data.userId || socket.id;
-    try {
-      await Location.findOneAndUpdate(
-        { userId },
-        { userId, coords: loc, updatedAt: new Date() },
-        { upsert: true }
-      );
-      socket.emit("locationSaved", { ok: true, at: Date.now() });
-    } catch (err) {
-      console.error("❌ Location save error:", err);
-    }
-  });
-
+  // Add your socket handlers here
   socket.on("disconnect", () => {
     console.log("🔴 Socket disconnected:", socket.id);
   });
 });
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+server.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  seedData();
+});

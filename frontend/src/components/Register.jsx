@@ -6,39 +6,40 @@ import "./Auth.css";
 function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState(""); // New state for phone number
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (password !== confirmPassword) {
-    alert("Passwords do not match!");
-    return;
-  }
-
-  try {
-    const res = await fetch("http://localhost:5000/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.message || "Registration failed");
+    if (password !== confirmPassword) {
+      alert("Passwords do not match!");
       return;
     }
 
-    alert("User registered successfully!");
-    navigate("/login");
-  } catch (error) {
-    console.error("Register error:", error);
-    alert("Something went wrong");
-  }
-};
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, phone, password }), // Include 'phone' in the request body
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Registration failed");
+        return;
+      }
+
+      alert("User registered successfully!");
+      navigate("/login");
+    } catch (error) {
+      console.error("Register error:", error);
+      alert("Something went wrong");
+    }
+  };
 
 
   return (
@@ -59,6 +60,13 @@ function Register() {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <input
+            type="tel" // Use type="tel" for phone numbers
+            placeholder="Phone Number"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
             required
           />
           <input

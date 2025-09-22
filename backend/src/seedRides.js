@@ -11,8 +11,13 @@ const rides = [
     date: today,
     time: "10:00",
     fare: 250,
-    driver: "Amit",
-    vehicleType: "Sedan"
+    driver: {
+      name: "Amit Kumar",
+      phone: "9988776655",
+      rating: 4.8
+    },
+    vehicleType: "Sedan",
+    availableSeats: 3
   },
   {
     source: "Gumthala",
@@ -20,8 +25,13 @@ const rides = [
     date: today,
     time: "12:00",
     fare: 300,
-    driver: "Bharat",
-    vehicleType: "SUV"
+    driver: {
+      name: "Bharat Singh",
+      phone: "9876543210",
+      rating: 4.6
+    },
+    vehicleType: "SUV",
+    availableSeats: 4
   },
   {
     source: "Chandi",
@@ -29,8 +39,55 @@ const rides = [
     date: today,
     time: "14:00",
     fare: 200,
-    driver: "Kasturi Lal",
-    vehicleType: "Hatchback"
+    driver: {
+      name: "Kasturi Lal",
+      phone: "9999888777",
+      rating: 4.9
+    },
+    vehicleType: "Hatchback",
+    availableSeats: 2
+  },
+  {
+    source: "Delhi",
+    destination: "Mumbai",
+    date: today,
+    time: "09:00",
+    fare: 1200,
+    driver: {
+      name: "Rajesh Sharma",
+      phone: "9123456789",
+      rating: 4.7
+    },
+    vehicleType: "Sedan",
+    availableSeats: 3
+  },
+  {
+    source: "Mumbai",
+    destination: "Pune",
+    date: today,
+    time: "11:30",
+    fare: 500,
+    driver: {
+      name: "Priya Patel",
+      phone: "9876512345",
+      rating: 4.8
+    },
+    vehicleType: "SUV",
+    availableSeats: 4
+  },
+  {
+    source: "Bangalore",
+    destination: "Chennai",
+    date: today,
+    time: "08:00",
+    fare: 800,
+    driver: {
+      name: "Venkat Reddy",
+      phone: "9988771234",
+      rating: 4.5
+    },
+    vehicleType: "Sedan",
+    availableSeats: 3
   }
 ];
 

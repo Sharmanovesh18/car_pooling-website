@@ -1,19 +1,27 @@
-import express from "express";
-import { searchRides, bookRide, createRide } from "../controllers/rideController.js";
+import express from 'express';
+import Ride from '../models/Ride.js';
 
 const router = express.Router();
 
-// GET /api/rides/search
-router.get("/search", searchRides);
-
-// POST /api/rides/book
-router.post("/book", async (req, res, next) => {
-	// If only driver, source, destination, date, time are provided, create a new ride
-	if (req.body && (!req.body.rideId && req.body.source && req.body.destination)) {
-		return createRide(req, res, next);
-	}
-	// Otherwise, book an existing ride
-	return bookRide(req, res, next);
+router.post('/create', async (req, res) => {
+  try {
+    const { source, destination, date, time, fare, driver, vehicleType, remainingSeats } = req.body;
+    const newRide = new Ride({
+      source,
+      destination,
+      date,
+      time,
+      fare,
+      driver,
+      vehicleType,
+      remainingSeats
+    });
+    await newRide.save();
+    res.status(201).json(newRide);
+  } catch (err) {
+    console.error("Error creating ride:", err);
+    res.status(500).send("Failed to create ride.");
+  }
 });
 
 export default router;

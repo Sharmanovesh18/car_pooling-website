@@ -1,5 +1,7 @@
 import "./HomePage.css";
 import { useState } from "react";
+import { useEffect } from "react";
+import DashBoard from "./DashBoard";
 
 function HomePage() {
     const [value, setValue] = useState("");
@@ -34,8 +36,8 @@ function HomePage() {
       </select>
 
       <p ><b>Selected: {value}</b></p>
-
-                        <button className="search-btn">Search Ride</button>
+                        {/* When the user clicks the search button then it will regenerate the dashboard.jsx page */}
+                        <button className="search-btn" onClick={() => {window.location.href = "./dashboard"}}>Search Ride</button>
                     </div>
                 </div>
             </section>
