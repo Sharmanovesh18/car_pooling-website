@@ -1,68 +1,88 @@
-// import express from "express";
-// import bcrypt from "bcryptjs";
-// import Users from "../models/Users.js";
+import express from "express";
+import bcrypt from "bcryptjs";
+import { User } from "../models/User.js";
 
-// const router = express.Router();
+const router = express.Router();
 
-// // Register
-// router.post("/register", async (req, res) => {
-//   try {
-//     const { name, email, password } = req.body;
+// Register
+router.post("/register", async (req, res) => {
+  try {
+    console.log("Registration request received:", req.body);
+    const { name, email, password } = req.body;
 
-//     // check if user exists
-//     const existingUser = await Users.findOne({ email });
-//     if (existingUser) {
-//       return res.status(400).json({ message: "Email already registered" });
-//     }
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
 
-//     // hash password
-//     const hashedPassword = await bcrypt.hash(password, 10);
+    // check if user exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email already registered" });
+    }
 
-//     const newUser = new Users({
-//       name,
-//       email,
-//       password: hashedPassword,
-//     });
+    // hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-//     await newUser.save();
-//     res.status(201).json({ message: "User registered successfully", user: newUser });
-//   } catch (error) {
-//     console.error("Register error:", error);
-//     res.status(500).json({ message: "Server error" });
-//   }
-// });
+    const newUser = new User({
+      name,
+      email,
+      password: hashedPassword,
+    });
 
-// // Login
-// // Login
-// router.post("/login", async (req, res) => {
-//   try {
-//     const { email, password } = req.body;
+    await newUser.save();
+    console.log("User registered successfully:", newUser.email);
+    
+    res.status(201).json({ 
+      message: "User registered successfully", 
+      user: {
+        id: newUser._id,
+        name: newUser.name,
+        email: newUser.email
+      }
+    });
+  } catch (error) {
+    console.error("Register error:", error);
+    res.status(500).json({ message: "Server error: " + error.message });
+  }
+});
 
-//     // find user by email
-//     const user = await Users.findOne({ email });
-//     if (!user) {
-//       return res.status(400).json({ message: "Invalid email or password" });
-//     }
+// Login
+router.post("/login", async (req, res) => {
+  try {
+    console.log("Login request received:", req.body);
+    const { email, password } = req.body;
 
-//     // compare passwords
-//     const isMatch = await bcrypt.compare(password, user.password);
-//     if (!isMatch) {
-//       return res.status(400).json({ message: "Invalid email or password" });
-//     }
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
 
-//     res.status(200).json({
-//       message: "Login successful",
-//       user: {
-//         id: user._id,
-//         name: user.name,
-//         email: user.email,
-//       },
-//     });
-//   } catch (error) {
-//     console.error("Login error:", error);
-//     res.status(500).json({ message: "Server error" });
-//   }
-// });
+    // find user by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      console.log("User not found:", email);
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
 
+    // compare passwords
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      console.log("Password mismatch for user:", email);
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
 
-// export default router;
+    console.log("Login successful for user:", email);
+    res.status(200).json({
+      message: "Login successful",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ message: "Server error: " + error.message });
+  }
+});
+
+export default router;

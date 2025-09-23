@@ -4,16 +4,14 @@ import cors from "cors";
 import dotenv from "dotenv";
 import http from "http";
 import { Server } from "socket.io";
-import bcrypt from "bcryptjs"; // New import
-import jwt from "jsonwebtoken"; // New import
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
-// New imports for ride search/booking
 import localRides from "./src/data/localRides.js";
 import Ride from "./src/models/Ride.js";
 import Booking from "./src/models/Booking.js";
-import User from "./src/models/User.js";
+import Users from "./src/models/Users.js"; // This is the updated import
 
-// Your existing imports
 import rideRoutes from "./src/routes/rideRoutes.js";
 import bookingRoutes from "./src/routes/bookingRoutes.js";
 import Location from "./src/models/Location.js";
@@ -40,16 +38,27 @@ const seedData = async () => {
   try {
     await Ride.deleteMany({});
     await Booking.deleteMany({});
-    await User.deleteMany({});
+    await Users.deleteMany({}); // Changed to Users
     await Ride.insertMany(localRides);
     console.log("✅ Database seeded with initial data.");
 
     // Create a sample user for testing
-    const sampleUser = new User({
-      _id: "66d30d3ad4b0c9241c9d4a11",
-      name: "John Doe",
-      phone: "123-456-7890",
+    const sampleUserEmail = "johndoe@example.com";
+    const sampleUserPassword = "password123";
+
+    // Hash the password for the sample user
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(sampleUserPassword, salt);
+
+    // Create a new sample user with all required fields
+    const sampleUser = new Users({ // Changed to Users
+        _id: "66d30d3ad4b0c9241c9d4a11",
+        name: "John Doe",
+        email: sampleUserEmail,
+        phone: "123-456-7890",
+        password: hashedPassword,
     });
+
     await sampleUser.save();
     console.log("✅ Sample user created.");
   } catch (err) {
@@ -57,17 +66,17 @@ const seedData = async () => {
   }
 };
 
-// New: User registration route
+// User registration route
 app.post("/api/auth/register", async (req, res) => {
   const { name, email, phone, password } = req.body;
   try {
-    const userExists = await User.findOne({ email });
+    const userExists = await Users.findOne({ email }); // Changed to Users
     if (userExists) {
       return res.status(400).json({ message: "User already exists" });
     }
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-    const user = new User({
+    const user = new Users({ // Changed to Users
       name,
       email,
       phone,
@@ -81,11 +90,11 @@ app.post("/api/auth/register", async (req, res) => {
   }
 });
 
-// New: User login route
+// User login route
 app.post("/api/auth/login", async (req, res) => {
   const { email, password } = req.body;
   try {
-    const user = await User.findOne({ email });
+    const user = await Users.findOne({ email }); // Changed to Users
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
@@ -111,7 +120,7 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
-// New: Middleware to protect routes (optional but recommended)
+// Middleware to protect routes (optional but recommended)
 const protect = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) {
@@ -126,10 +135,10 @@ const protect = (req, res, next) => {
   }
 };
 
-// New: Protected route to get user profile
+// Protected route to get user profile
 app.get("/api/auth/profile", protect, async (req, res) => {
   try {
-    const user = await User.findById(req.user).select("-password");
+    const user = await Users.findById(req.user).select("-password"); // Changed to Users
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -194,7 +203,7 @@ app.post("/api/rides/book", async (req, res) => {
   const { rideId, userId } = req.body;
   try {
     const ride = await Ride.findById(rideId);
-    const user = await User.findById(userId);
+    const user = await Users.findById(userId); // Changed to Users
 
     if (!ride) {
       return res.status(404).send("Ride not found.");
