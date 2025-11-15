@@ -2,10 +2,14 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from 'path';
+import { fileURLToPath } from 'url';
 import http from "http";
 import { Server } from "socket.io";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import crypto from 'crypto';
+import Razorpay from 'razorpay';
 
 import localRides from "./src/data/localRides.js";
 import Ride from "./src/models/Ride.js";
@@ -16,7 +20,22 @@ import rideRoutes from "./src/routes/rideRoutes.js";
 import bookingRoutes from "./src/routes/bookingRoutes.js";
 import Location from "./src/models/Location.js";
 
-dotenv.config();
+import userRoutes from "./routes/userRoutes.js";
+import connectDB from "./config/db.js";
+
+
+
+
+// Explicitly resolve .env relative to this file so env vars load even when
+// the process is started from a different working directory.
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const envPath = path.resolve(__dirname, '.env');
+dotenv.config({ path: envPath });
+
+console.log('Loaded env from:', envPath);
+console.log('Razorpay key id present:', !!process.env.RAZORPAY_KEY_ID);
+console.log('Razorpay key secret present:', !!process.env.RAZORPAY_KEY_SECRET);
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -24,11 +43,17 @@ app.use(express.json());
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
+// --- REAL AUTH0 CONFIGURATION NOTE ---
+// For a real deployment, you would need to install:
+// npm install express-oauth2-jwt-bearer jwks-rsa
+// to securely verify the JWT Access Token issued by Auth0.
+
 // DB connection
 mongoose
   .connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+    // Note: useCreateIndex and useFindAndModify are deprecated and removed in Mongoose 6+
   })
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ DB Error:", err));
@@ -66,7 +91,134 @@ const seedData = async () => {
   }
 };
 
-// User registration route
+app.use('/api/users', userRoutes);
+
+// Payments: create Razorpay order and verify signature
+app.post('/api/payments/create-order', async (req, res) => {
+  const { amount, bookingId } = req.body;
+  if (!amount) return res.status(400).json({ message: 'Amount required' });
+
+  const key_id = process.env.RAZORPAY_KEY_ID;
+  const key_secret = process.env.RAZORPAY_KEY_SECRET;
+  if (!key_id || !key_secret) return res.status(500).json({ message: 'Payment keys not configured' });
+
+  try {
+    const razorpay = new Razorpay({ key_id, key_secret });
+    const order = await razorpay.orders.create({
+      amount: amount,
+      currency: 'INR',
+      receipt: `receipt_${bookingId || 'manual'}_${Date.now()}`,
+    });
+    res.json({ order, key_id });
+  } catch (err) {
+    console.error('Razorpay create order error', err);
+    res.status(500).json({ message: 'Failed to create order' });
+  }
+});
+
+app.post('/api/payments/verify', async (req, res) => {
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, bookingId } = req.body;
+  const key_secret = process.env.RAZORPAY_KEY_SECRET;
+  if (!key_secret) return res.status(500).json({ message: 'Payment secret not configured' });
+  try {
+    const generated_signature = crypto.createHmac('sha256', key_secret).update(razorpay_order_id + '|' + razorpay_payment_id).digest('hex');
+    if (generated_signature === razorpay_signature) {
+      // Optionally mark booking as paid in DB here (bookingId)
+      return res.json({ success: true });
+    } else {
+      return res.status(400).json({ success: false, message: 'Invalid signature' });
+    }
+  } catch (err) {
+    console.error('Verify payment error', err);
+    res.status(500).json({ message: 'Failed to verify payment' });
+  }
+});
+
+// --- AUTH0 SYNCHRONIZATION MIDDLEWARE (MOCK) ---
+// This mock simulates verifying the Auth0 Access Token and extracting the user ID.
+const mockVerifyAuth0Token = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ message: "Auth0 Access Token required" });
+    }
+
+    const token = authHeader.split(" ")[1];
+    let auth0_sub; // This is the unique user ID (sub claim) from Auth0
+
+    // MOCK: In production, this logic would be replaced by JWT verification middleware
+    if (token === "mock-valid-token-passenger") {
+        auth0_sub = "auth0|mock-passenger-123"; 
+    } else if (token === "mock-valid-token-driver") {
+        auth0_sub = "auth0|mock-driver-456";
+    } else {
+         return res.status(401).json({ message: "Invalid or expired Auth0 token (Mocked)" });
+    }
+
+    req.auth0_sub = auth0_sub; // Attach Auth0 ID to the request
+    next();
+};
+
+// --- NEW ROUTE: Sync Social Login User Data ---
+app.post("/api/auth/sync-social", mockVerifyAuth0Token, async (req, res) => {
+    /**
+     * This endpoint is called by the frontend immediately after a successful Auth0 login.
+     * It uses the verified Auth0 ID to find or create the user in the MongoDB database,
+     * ensuring their role is assigned and profile data is synchronized.
+     */
+    const { email, name, role } = req.body;
+    const auth0_user_id = req.auth0_sub; // Extracted from the validated Auth0 token
+
+    if (!email || !name || !role) {
+        return res.status(400).json({ message: "Missing profile data (email, name, role)" });
+    }
+
+    try {
+        // Find user by Auth0 ID OR Email (to link accounts if the email already exists)
+        const user = await Users.findOneAndUpdate(
+            { $or: [{ auth0_id: auth0_user_id }, { email: email }] },
+            {
+                $set: {
+                    name,
+                    email,
+                    app_role: role, // Save the selected role (Passenger/Driver)
+                    auth0_id: auth0_user_id, // Ensure the Auth0 ID is set
+                    last_login: Date.now(),
+                },
+                // We intentionally do NOT overwrite the 'password' field if it exists
+                // The 'password' field is used only by the manual login flow.
+            },
+            { 
+                new: true, // Return the updated document
+                upsert: true, // Create the document if it doesn't exist
+                runValidators: true // Ensure validation runs on updates
+            }
+        ).select("-password");
+
+        // The user is now logged in via Auth0 and synchronized in the database.
+        // We generate a local JWT for application usage based on the MongoDB user ID.
+        const token = jwt.sign({ id: user._id, role: user.app_role }, process.env.JWT_SECRET, {
+            expiresIn: "1h",
+        });
+
+        res.status(200).json({
+            message: `User synchronized and logged in as ${user.app_role}!`,
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.app_role,
+            },
+            token,
+        });
+
+    } catch (err) {
+        console.error("❌ Auth0 Sync error:", err);
+        res.status(500).json({ message: "Server error during user synchronization" });
+    }
+});
+
+
+// User registration route (MANUAL AUTH - KEPT)
 app.post("/api/auth/register", async (req, res) => {
   const { name, email, phone, password } = req.body;
   try {
@@ -81,16 +233,31 @@ app.post("/api/auth/register", async (req, res) => {
       email,
       phone,
       password: hashedPassword,
+      app_role: 'Passenger' // Default role for manual sign up
     });
     await user.save();
-    res.status(201).json({ message: "User registered successfully!" });
+    // Generate JWT for the newly created user
+    const jwtSecret = process.env.JWT_SECRET || 'default_jwt_secret';
+    const token = jwt.sign({ id: user._id, role: user.app_role }, jwtSecret, {
+      expiresIn: '1h',
+    });
+
+    // Return user profile (without password) and token
+    const userProfile = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.app_role,
+    };
+
+    res.status(201).json({ message: "User registered successfully!", user: userProfile, token });
   } catch (err) {
     console.error("❌ Registration error:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-// User login route
+// User login route (MANUAL AUTH - KEPT)
 app.post("/api/auth/login", async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -102,7 +269,7 @@ app.post("/api/auth/login", async (req, res) => {
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: user._id, role: user.app_role }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
     res.status(200).json({
@@ -111,6 +278,7 @@ app.post("/api/auth/login", async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        role: user.app_role,
       },
       token,
     });
@@ -127,15 +295,17 @@ const protect = (req, res, next) => {
     return res.status(401).json({ message: "Not authorized, no token" });
   }
   try {
+    // Note: The token now includes the user's role
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded.id;
+    req.role = decoded.role; // Extract role from JWT
     next();
   } catch (err) {
     res.status(401).json({ message: "Not authorized, token failed" });
   }
 };
 
-// Protected route to get user profile
+// Protected route to get user profile (KEPT)
 app.get("/api/auth/profile", protect, async (req, res) => {
   try {
     const user = await Users.findById(req.user).select("-password"); // Changed to Users
@@ -149,7 +319,7 @@ app.get("/api/auth/profile", protect, async (req, res) => {
   }
 });
 
-// Search route
+// Search route (KEPT)
 app.get("/api/rides/search", async (req, res) => {
   const { source, destination, date } = req.query;
 
@@ -198,7 +368,7 @@ app.get("/api/rides/search", async (req, res) => {
   }
 });
 
-// Book route
+// Book route (KEPT)
 app.post("/api/rides/book", async (req, res) => {
   const { rideId, userId } = req.body;
   try {
@@ -250,11 +420,11 @@ app.post("/api/rides/book", async (req, res) => {
   }
 });
 
-// Other API Routes
+// Other API Routes (KEPT)
 app.use("/api/rides", rideRoutes);
 app.use("/api", bookingRoutes);
 
-// Socket.io for live location
+// Socket.io for live location (KEPT)
 io.on("connection", (socket) => {
   console.log("🟢 Socket connected:", socket.id);
   // Add your socket handlers here
@@ -267,4 +437,11 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   seedData();
+});
+
+// Diagnostic endpoint: check if Razorpay keys are present (DOES NOT RETURN SECRET)
+app.get('/api/payments/config', (req, res) => {
+  const hasKeyId = !!process.env.RAZORPAY_KEY_ID;
+  const hasKeySecret = !!process.env.RAZORPAY_KEY_SECRET;
+  res.json({ configured: hasKeyId && hasKeySecret, hasKeyId, hasKeySecret, key_id: process.env.RAZORPAY_KEY_ID || null });
 });

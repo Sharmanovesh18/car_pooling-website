@@ -21,7 +21,7 @@ const callGeminiAPI = async (prompt) => {
         "Content-Type": "application/json",
         "X-goog-api-key": apiKey,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(payload), // 
     });
 
     if (!response.ok) {

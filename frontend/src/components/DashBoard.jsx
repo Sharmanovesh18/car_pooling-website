@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import './DashBoard.css';
+import { useNavigate } from 'react-router-dom';
 // This is a single-file React app, so all components and logic are here.
 // No separate files are needed for this project.
 
@@ -16,7 +17,7 @@ const TimedRideCard = ({ ride, onBook, onShare, bookingRideId, bookingLoading })
   if (!visible) return null;
 
   return (
-    <div className="bg-white p-4 rounded-xl shadow-md transition-transform transform hover:scale-105 w-full">
+    <div className="ride-card-gradient p-4 rounded-xl shadow-md transition-transform transform hover:scale-105 w-full">
       <div className="flex justify-between items-center text-gray-700 font-semibold mb-2">
         <span>{ride.startTime || ride.time}</span>
         <div className="text-sm text-gray-500 flex items-center gap-2">
@@ -85,6 +86,14 @@ const DashBoard = () => {
 
   const todayDate = new Date().toISOString().split('T')[0];
 
+  // Demo route suggestions (predefined popular routes)
+  const demoRoutes = [
+    { source: 'Mumbai', destination: 'Pune' },
+    { source: 'Mumbai', destination: 'Nashik' },
+    { source: 'Delhi', destination: 'Gurgaon' },
+    { source: 'Rajpura', destination: 'Chandigarh' },
+  ];
+
   const handleSearch = async () => {
     setMessage(null);
     setLoading(true);
@@ -98,11 +107,26 @@ const DashBoard = () => {
         },
       });
 
-      if (res.data.results.length === 0 && res.data.message) {
-        setMessage({ type: 'info', text: res.data.message });
+      if (res.data.results.length === 0) {
+        // If no matches for the requested date, try a relaxed search without date
+        if (date) {
+          const fallback = await axios.get("http://localhost:5000/api/rides/search", {
+            params: { source: start, destination }
+          });
+          if ((fallback.data.results || []).length > 0) {
+            setRides(fallback.data.results);
+            setMessage({ type: 'info', text: 'Showing demo rides (date relaxed) for this route.' });
+          } else {
+            setRides([]);
+            setMessage({ type: 'info', text: res.data.message || 'No rides found.' });
+          }
+        } else {
+          setRides([]);
+          setMessage({ type: 'info', text: res.data.message || 'No rides found.' });
+        }
+      } else {
+        setRides(res.data.results || []);
       }
-      
-      setRides(res.data.results || []);
     } catch (err) {
       console.error("Axios error:", err);
       setRides([]);
@@ -345,6 +369,16 @@ const DashBoard = () => {
               <div><b>Fare:</b> <span className="text-green-600 font-semibold">₹{bookingPopup.fare}</span></div>
               <div><b>Driver:</b> {bookingPopup.driver?.name || bookingPopup.driver}</div>
               <div><b>Remaining seats:</b> {bookingPopup.remainingSeats}</div>
+            </div>
+            <div className="mt-4 flex gap-3 justify-end">
+              <button onClick={() => setBookingPopup(null)} className="px-4 py-2 rounded-full bg-gray-200 hover:bg-gray-300">Close</button>
+              <button onClick={() => {
+                // Navigate to payment page and pass booking details
+                // using location state so the payment page can create an order
+                window.history.pushState({ booking: bookingPopup }, '', '/payment');
+                // navigate via location change so React Router loads the route
+                window.dispatchEvent(new PopStateEvent('popstate'));
+              }} className="px-4 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700">Proceed to Payment</button>
             </div>
           </div>
         </div>

@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Navbar.css";
+// import { useState } from "react";
+import AuthModal from "./AuthModal";
 
 function Navbar() {
   const [currentUser, setCurrentUser] = useState(null);
+  const [authOpen, setAuthOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -28,7 +31,7 @@ function Navbar() {
 
     window.dispatchEvent(new Event("auth-changed"));
 
-    navigate("/login");
+    navigate("/");
   };
 
   return (
@@ -46,22 +49,24 @@ function Navbar() {
         <Link to="#">Help</Link>
         <Link to="#">Contact</Link>
         <Link to="/location">Location</Link>
+        {/* <Link to="/profile">Profile</Link> */}
       </nav>
 
       {currentUser ? (
         <div className="profile-dropdown">
           <button className="profile-btn">
-            👤 {currentUser.name.split(" ")[0]} ▼
+            Hello {currentUser.name.split(" ")[0]}
           </button>
           <div className="dropdown-content">
             <Link to="/profile">Profile</Link>
-            <button onClick={handleLogout}>Logout</button>
+            <button onClick={handleLogout}>Sign Out</button>
           </div>
         </div>
       ) : (
-        <Link to="/login">
-          <button className="login-btn">Login / Signup</button>
-        </Link>
+        <>
+          <button className="login-btn" onClick={() => setAuthOpen(true)}>Login / Signup</button>
+          <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} />
+        </>
       )}
     </header>
   );

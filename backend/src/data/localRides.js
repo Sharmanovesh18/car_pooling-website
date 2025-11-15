@@ -3,7 +3,7 @@ const localRides = [
     _id: "66d30d3ad4b0c9241c9d4a11",
     source: "Mumbai",
     destination: "Pune",
-    date: "2025-09-23",
+    date: "2025-09-25",
     time: "09:00",
     fare: 1500,
     driver: {
@@ -67,7 +67,7 @@ const localRides = [
     _id: "66d30d3ad4b0c9241c9d4a15",
     source: "Rajpura",
     destination: "Chandigarh",
-    date: "2025-09-25",
+    date: "2025-09-24",
     time: "18:00",
     fare: 450,
     driver: {
