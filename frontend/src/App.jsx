@@ -15,6 +15,8 @@ import Location from "./components/MapPage";
 import ChatSupport from "./components/Chatbot"; 
 import CtaStyles from "./components/Download"; 
 import DiscountCTA from "./components/Animation";
+import HelpPage from "./components/HelpPage";
+
 
 // ✅ Layout wrapper
 function Layout({ children }) {
@@ -75,6 +77,8 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/location" element={<Location />} />
+          <Route path="/help" element={<HelpPage />} />
+
         </Routes>
       </Layout>
     </Router>

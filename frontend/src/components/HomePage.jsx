@@ -2,6 +2,8 @@ import "./HomePage.css";
 import { useState } from "react";
 import { useEffect } from "react";
 import DashBoard from "./DashBoard";
+import { Link } from "react-router-dom";
+
 
 function HomePage() {
     const [value, setValue] = useState("");
@@ -49,7 +51,16 @@ function HomePage() {
                     <div>✅ Safe and Verified Drivers</div>
                     <div>📍 Real-time Tracking</div>
                     <div>💳 Multiple Payment Options</div>
-                    <div>🕐 24/7 Support</div>
+                    <div
+  className="clickable-support"
+  onClick={() => {
+    window.location.href = "/help"; // navigate to your help page
+  }}
+  style={{ cursor: "pointer" }} // shows pointer on hover
+>
+  🕐 24/7 Support
+</div>
+
                 </div>
             </section>
 

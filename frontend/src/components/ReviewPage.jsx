@@ -1,79 +1,106 @@
-// src/components/ReviewPage.jsx
 import React, { useState } from "react";
 import "./ReviewPage.css";
 
 function ReviewPage() {
-  const [reviews, setReviews] = useState([
-    { name: "John", rating: 5, comment: "Best ride experience ever!" },
-    { name: "Sara", rating: 4, comment: "Affordable and reliable service." },
-    { name: "Amit", rating: 5, comment: "Very safe for night travel." }
-  ]);
-
+  const [reviews, setReviews] = useState([]);
   const [newReview, setNewReview] = useState({
     name: "",
-    rating: "",
-    comment: ""
+    email: "",
+    comment: "",
+    rating: 0,
   });
+  const [hoverRating, setHoverRating] = useState(0);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setNewReview({ ...newReview, [name]: value });
   };
 
+  const handleStarClick = (star) => {
+    setNewReview({ ...newReview, rating: star });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (newReview.name && newReview.rating && newReview.comment) {
-      setReviews([...reviews, newReview]);
-      setNewReview({ name: "", rating: "", comment: "" });
+    const { name, email, comment, rating } = newReview;
+    if (!name || !email || !comment || !rating) {
+      alert("Please fill all fields and select a rating!");
+      return;
     }
+    setReviews([...reviews, newReview]);
+    setNewReview({ name: "", email: "", comment: "", rating: 0 });
+    setHoverRating(0);
   };
 
   return (
     <div className="review-page">
-      <h2>Customer Reviews</h2>
+      <h2>Customer Feedback</h2>
 
-      {/* Review List */}
+      {/* Display Submitted Reviews */}
       <div className="review-list">
-        {reviews.map((r, index) => (
-          <div key={index} className="review-card">
-            <h4>{r.name} ⭐ {r.rating}/5</h4>
+        {reviews.map((r, idx) => (
+          <div key={idx} className="review-card">
+            <h4>{r.name} ({r.email})</h4>
+            <div className="review-stars">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <span key={i}>{i <= r.rating ? "⭐" : "☆"}</span>
+              ))}
+            </div>
             <p>{r.comment}</p>
           </div>
         ))}
       </div>
 
-      {/* Add Review Form */}
+      {/* Feedback Form */}
       <form className="review-form" onSubmit={handleSubmit}>
-        <h3>Write a Review</h3>
+        <h3>Leave Your Feedback</h3>
         <input
           type="text"
           name="name"
           placeholder="Your Name"
           value={newReview.name}
           onChange={handleChange}
+          required
         />
-        <select
-          name="rating"
-          value={newReview.rating}
+        <input
+          type="email"
+          name="email"
+          placeholder="Your Email"
+          value={newReview.email}
           onChange={handleChange}
-        >
-          <option value="">Select Rating</option>
-          <option value="5">⭐⭐⭐⭐⭐</option>
-          <option value="4">⭐⭐⭐⭐</option>
-          <option value="3">⭐⭐⭐</option>
-          <option value="2">⭐⭐</option>
-          <option value="1">⭐</option>
-        </select>
+          required
+        />
         <textarea
           name="comment"
-          placeholder="Write your review..."
+          placeholder="Write your feedback..."
           value={newReview.comment}
           onChange={handleChange}
+          required
         ></textarea>
-        <button type="submit">Submit Review</button>
+
+        {/* Interactive 5-Star Rating */}
+        <div className="star-rating">
+          {[1, 2, 3, 4, 5].map((star) => {
+            const filled = star <= (hoverRating || newReview.rating);
+            return (
+              <span
+                key={star}
+                className={filled ? "filled" : ""}
+                onMouseEnter={() => setHoverRating(star)}
+                onMouseLeave={() => setHoverRating(0)}
+                onClick={() => handleStarClick(star)}
+              >
+                {filled ? "⭐" : "☆"}
+              </span>
+            );
+          })}
+        </div>
+
+        <button type="submit">Submit Feedback</button>
       </form>
     </div>
   );
 }
 
 export default ReviewPage;
+

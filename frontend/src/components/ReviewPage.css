@@ -1,57 +1,129 @@
 .review-page {
-  padding: 120px 10% 50px;
-  text-align: center;
-  margin-top: 0px;
+  max-width: 700px;
+  margin: 40px auto;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
 }
 
+h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 2em;
+  color: #5d5dff;
+}
+
+/* Submitted Reviews */
 .review-list {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 20px;
   margin-bottom: 40px;
 }
 
 .review-card {
-  background: #fff;
+  background: #ffffff;
   padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  width: 280px;
-  text-align: left;
+  border-radius: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e0e0e0;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.review-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
 }
 
 .review-card h4 {
-  margin-bottom: 10px;
-  color: var(--primary-color);
+  margin: 0 0 8px 0;
+  font-weight: 600;
 }
 
+.review-stars {
+  color: #ffb800;
+  margin-bottom: 12px;
+  font-size: 22px;
+}
+
+/* Feedback Form */
 .review-form {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  max-width: 400px;
-  margin: 0 auto;
+  background: #ffffff;
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  border: 1px solid #d1d1d1;
+}
+
+.review-form h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #5d5dff;
+  font-size: 1.5em;
+  text-align: center;
 }
 
 .review-form input,
-.review-form select,
 .review-form textarea {
-  padding: 12px;
+  width: 100%;
+  padding: 12px 15px;
+  margin-bottom: 15px;
+  border-radius: 12px;
   border: 1px solid #ccc;
-  border-radius: 8px;
+  font-size: 1em;
+  transition: border 0.2s, box-shadow 0.2s;
 }
 
+.review-form input:focus,
+.review-form textarea:focus {
+  outline: none;
+  border-color: #5d5dff;
+  box-shadow: 0 0 8px rgba(93, 93, 255, 0.3);
+}
+
+.review-form textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+/* Star Rating */
+.star-rating {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  font-size: 30px;
+}
+
+.star-rating span {
+  transition: transform 0.2s, color 0.2s;
+  color: #ccc;
+}
+
+.star-rating span.filled {
+  color: #ffb800;
+}
+
+.star-rating span:hover,
+.star-rating span:hover ~ span {
+  color: #ffb800;
+  transform: scale(1.2);
+}
+
+/* Submit Button */
 .review-form button {
-  background: var(--primary-color);
-  color: #fff;
+  background-color: #5d5dff;
+  color: white;
   border: none;
-  padding: 12px;
-  border-radius: 8px;
+  padding: 14px 30px;
+  border-radius: 12px;
+  font-size: 1em;
   cursor: pointer;
-  font-weight: bold;
+  font-weight: 600;
+  display: block;
+  margin: 0 auto;
+  transition: all 0.2s;
 }
 
 .review-form button:hover {
-  background: #4b4bdf;
+  background-color: #4b4bdf;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
