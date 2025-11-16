@@ -135,49 +135,71 @@ const DashBoard = () => {
     setLoading(false);
   };
 
-  const handleBook = async (rideId) => {
-    setBookingLoading(true);
-    setBookingRideId(rideId);
-    
-    try {
-      const rideBookingResponse = await fetch("http://localhost:5000/api/rides/book", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ 
-          rideId, 
-          userId: "66d30d3ad4b0c9241c9d4a11" // Replace with actual logged-in user ID
-        })
-      });
+  const handleBook = async (rideIdParam) => {
+  setBookingLoading(true);
 
-      if (!rideBookingResponse.ok) {
-        const text = await rideBookingResponse.text();
-        setMessage({ type: 'error', text: `Booking failed: ${text}` });
-        return;
+  // support both _id and id, and ensure rideId passed correctly
+  const rideId = (rideIdParam !== undefined && rideIdParam !== null) ? rideIdParam : null;
+  setBookingRideId(rideId);
+
+  // derive logged-in user's token from localStorage (AuthModal stores 'currentUser')
+  const stored = JSON.parse(localStorage.getItem('currentUser')) || {};
+  const token = stored?.token;
+
+  try {
+    const rideBookingResponse = await fetch("http://localhost:5000/api/rides/book", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        // ✅ Always attach Authorization header if token exists
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      // ✅ include credentials if backend uses cookies/sessions
+      credentials: "include",
+      body: JSON.stringify({ rideId })
+    });
+
+    if (!rideBookingResponse.ok) {
+      // Try to parse JSON error
+      try {
+        const errJson = await rideBookingResponse.json();
+        // If unauthorized, clear stale auth and prompt re-login
+        if (rideBookingResponse.status === 401) {
+          localStorage.removeItem('currentUser');
+          window.dispatchEvent(new Event('auth-changed'));
+          const userMsg = errJson?.message || 'Authentication required. Please sign in again.';
+          setMessage({ type: 'error', text: `Booking failed: ${userMsg}` });
+          return;
+        }
+        setMessage({ type: 'error', text: `Booking failed: ${JSON.stringify(errJson)}` });
+      } catch (e) {
+        const errText = await rideBookingResponse.text();
+        setMessage({ type: 'error', text: `Booking failed: ${errText}` });
       }
-
-      const rideBookingData = await rideBookingResponse.json();
-      
-      setBookingPopup({
-        start: rideBookingData.ride.source,
-        destination: rideBookingData.ride.destination,
-        fare: rideBookingData.ride.fare,
-        driver: rideBookingData.ride.driver,
-        remainingSeats: rideBookingData.ride.remainingSeats,
-      });
-
-      // Refresh the search results to show updated availability
-      handleSearch();
-      
-    } catch (err) {
-      console.error("Error booking:", err);
-      setMessage({ type: 'error', text: `Booking failed: ${err.message}` });
-    } finally {
-      setBookingLoading(false);
-      setBookingRideId(null);
+      return;
     }
-  };
+
+    const rideBookingData = await rideBookingResponse.json();
+
+    setBookingPopup({
+      start: rideBookingData.ride.source,
+      destination: rideBookingData.ride.destination,
+      fare: rideBookingData.ride.fare,
+      driver: rideBookingData.ride.driver,
+      remainingSeats: rideBookingData.ride.remainingSeats,
+    });
+
+    // Refresh the search results to show updated availability
+    handleSearch();
+
+  } catch (err) {
+    console.error("Error booking:", err);
+    setMessage({ type: 'error', text: `Booking failed: ${err.message}` });
+  } finally {
+    setBookingLoading(false);
+    setBookingRideId(null);
+  }
+};
 
   const bookingHistory = async () => {
     const userId = "66d30d3ad4b0c9241c9d4a11";

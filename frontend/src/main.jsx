@@ -15,4 +15,5 @@ root.render(
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
+// reportWebVitals is optional and not used in this project.
+// If you want to enable web vitals, import and call reportWebVitals.

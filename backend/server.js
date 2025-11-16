@@ -36,8 +36,17 @@ dotenv.config({ path: envPath });
 console.log('Loaded env from:', envPath);
 console.log('Razorpay key id present:', !!process.env.RAZORPAY_KEY_ID);
 console.log('Razorpay key secret present:', !!process.env.RAZORPAY_KEY_SECRET);
+// Consolidate JWT secret usage (fallback for local dev)
+const JWT_SECRET = process.env.JWT_SECRET || 'default_jwt_secret';
+
 const app = express();
-app.use(cors());
+// Explicit CORS policy: allow Authorization header and JSON content-type
+app.use(cors({
+  origin: true,
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization", "Accept"],
+  exposedHeaders: ["Authorization"],
+}));
 app.use(express.json());
 
 const server = http.createServer(app);
@@ -196,7 +205,7 @@ app.post("/api/auth/sync-social", mockVerifyAuth0Token, async (req, res) => {
 
         // The user is now logged in via Auth0 and synchronized in the database.
         // We generate a local JWT for application usage based on the MongoDB user ID.
-        const token = jwt.sign({ id: user._id, role: user.app_role }, process.env.JWT_SECRET, {
+        const token = jwt.sign({ id: user._id, role: user.app_role }, JWT_SECRET, {
             expiresIn: "1h",
         });
 
@@ -237,8 +246,7 @@ app.post("/api/auth/register", async (req, res) => {
     });
     await user.save();
     // Generate JWT for the newly created user
-    const jwtSecret = process.env.JWT_SECRET || 'default_jwt_secret';
-    const token = jwt.sign({ id: user._id, role: user.app_role }, jwtSecret, {
+    const token = jwt.sign({ id: user._id, role: user.app_role }, JWT_SECRET, {
       expiresIn: '1h',
     });
 
@@ -269,7 +277,7 @@ app.post("/api/auth/login", async (req, res) => {
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
-    const token = jwt.sign({ id: user._id, role: user.app_role }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: user._id, role: user.app_role }, JWT_SECRET, {
       expiresIn: "1h",
     });
     res.status(200).json({
@@ -296,7 +304,7 @@ const protect = (req, res, next) => {
   }
   try {
     // Note: The token now includes the user's role
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded.id;
     req.role = decoded.role; // Extract role from JWT
     next();
@@ -370,21 +378,64 @@ app.get("/api/rides/search", async (req, res) => {
 
 // Book route (KEPT)
 app.post("/api/rides/book", async (req, res) => {
-  const { rideId, userId } = req.body;
+  let { rideId } = req.body;
+  let userId = null;
+  console.log('Booking request received:', { rideId });
+  // Prefer to derive userId from Authorization token (trusted source).
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      userId = decoded.id;
+      console.log('Derived userId from token:', userId);
+    } catch (err) {
+      console.warn('Failed to verify token for booking (Authorization header present):', err?.message || err);
+      return res.status(401).json({ message: 'Invalid or expired token' });
+    }
+  } else if (req.body.token) {
+    // Accept token in body for non-browser clients (fallback)
+    try {
+      const decoded = jwt.verify(req.body.token, JWT_SECRET);
+      userId = decoded.id;
+      console.log('Derived userId from body.token fallback:', userId);
+    } catch (err) {
+      console.warn('Failed to verify token from body for booking:', err?.message || err);
+    }
+  }
+  // If still no userId, allow deprecated body.userId fallback but log a warning.
+  if (!userId && req.body.userId) {
+    userId = req.body.userId;
+    console.log('Falling back to body.userId for booking (deprecated):', userId);
+  }
   try {
     const ride = await Ride.findById(rideId);
-    const user = await Users.findById(userId); // Changed to Users
+    let user = await Users.findById(userId); // Changed to Users
+    // Auto-provision missing user in development if configured (use with caution)
+    if (!user && process.env.AUTO_PROVISION === 'true' && userId) {
+      try {
+        console.log('Auto-provisioning missing user:', userId);
+        user = await Users.create({ _id: userId, name: 'AutoProvisioned User', email: `autouser+${userId}@local`, phone: '' });
+        console.log('Auto-provisioned user created:', user._id);
+      } catch (provErr) {
+        console.error('Auto-provision failed:', provErr);
+      }
+    }
 
     if (!ride) {
-      return res.status(404).send("Ride not found.");
+      console.warn('Booking failed: ride not found', rideId);
+      return res.status(404).json({ message: 'Ride not found', rideId });
     }
 
     if (!user) {
-      return res.status(404).send("User not found.");
+      console.warn('Booking failed: user not found', userId);
+      // If token decoded to an id that's not in our DB, instruct client to re-login.
+      return res.status(401).json({ message: 'Authenticated user not found. Please sign out and sign in again.' });
     }
 
     if (ride.remainingSeats <= 0) {
-      return res.status(400).send("No seats available for this ride.");
+      console.warn('Booking failed: no seats', rideId);
+      return res.status(400).json({ message: 'No seats available for this ride' });
     }
 
     ride.remainingSeats -= 1;
@@ -404,7 +455,7 @@ app.post("/api/rides/book", async (req, res) => {
     await booking.save();
 
     res.status(200).json({
-      message: "Ride booked successfully",
+      message: 'Ride booked successfully',
       booking,
       ride: {
         source: ride.source,
@@ -415,8 +466,8 @@ app.post("/api/rides/book", async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("❌ Error booking ride:", err);
-    res.status(500).send("Failed to book ride: " + err.message);
+    console.error('❌ Error booking ride:', err?.message || err);
+    res.status(500).json({ message: 'Failed to book ride', error: err?.message || String(err) });
   }
 });
 
@@ -444,4 +495,44 @@ app.get('/api/payments/config', (req, res) => {
   const hasKeyId = !!process.env.RAZORPAY_KEY_ID;
   const hasKeySecret = !!process.env.RAZORPAY_KEY_SECRET;
   res.json({ configured: hasKeyId && hasKeySecret, hasKeyId, hasKeySecret, key_id: process.env.RAZORPAY_KEY_ID || null });
+});
+
+// DEBUG: whoami - decode token and check user existence (for debugging only)
+app.get('/api/debug/whoami', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const uid = decoded.id;
+    const user = await Users.findById(uid).select('-password');
+    return res.json({ ok: true, decoded, user: user ? { id: user._id, name: user.name, email: user.email, phone: user.phone } : null });
+  } catch (err) {
+    return res.status(400).json({ ok: false, message: 'Invalid token', error: err.message });
+  }
+});
+
+// DEV: list all users (safe for local debugging only)
+app.get('/api/debug/users', async (req, res) => {
+  try {
+    const users = await Users.find().select('_id name email phone');
+    res.json({ ok: true, count: users.length, users });
+  } catch (err) {
+    console.error('Error fetching users for debug:', err);
+    res.status(500).json({ ok: false, message: 'Failed to fetch users' });
+  }
+});
+
+// DEV: get one user by id
+app.get('/api/debug/users/:id', async (req, res) => {
+  try {
+    const u = await Users.findById(req.params.id).select('_id name email phone');
+    if (!u) return res.status(404).json({ ok: false, message: 'User not found' });
+    res.json({ ok: true, user: u });
+  } catch (err) {
+    console.error('Error fetching user by id for debug:', err);
+    res.status(500).json({ ok: false, message: 'Failed to fetch user' });
+  }
 });
