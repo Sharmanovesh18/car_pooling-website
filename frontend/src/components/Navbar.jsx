@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Navbar.css";
+// import logo from "../assets/logo.jpg";
+// import Help from "../pages/Help";
+// import driver from "../pages/Driver";
+
 
 function Navbar() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -42,10 +46,13 @@ function Navbar() {
         <Link to="/">Home</Link>
         <Link to="/dashboard">Rides</Link>
         <Link to="/reviews">Reviews</Link>
-        <Link to="#">Offers</Link>
-        <Link to="#">Help</Link>
-        <Link to="#">Contact</Link>
+        <Link to="/offers">Offers</Link>
+        <Link to="/help" src="Help.jsx">Help</Link>
+
+        <Link to="/contact">Contact</Link>
         <Link to="/location">Location</Link>
+        <Link to="/driver">Driver</Link>
+
       </nav>
 
       {currentUser ? (

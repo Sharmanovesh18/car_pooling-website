@@ -11,6 +11,7 @@ export default function PlaceSearch({ onSelect, label = 'Place' }) {
       fields: ["formatted_address", "geometry", "name", "place_id"]
     });
 
+    
     const handlePlaceChanged = () => {
       const place = ac.getPlace();
       if (!place.geometry) return;
