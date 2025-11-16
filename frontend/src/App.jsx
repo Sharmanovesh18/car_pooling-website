@@ -14,6 +14,8 @@ import CtaStyles from "./components/Download";
 import DiscountCTA from "./components/Animation";
 import Profile from "./components/Profile";
 import Payment from "./components/Payment";
+import HelpPage from "./components/HelpPage";
+
 
 function Layout({ children }) {
   const location = useLocation();
@@ -64,6 +66,7 @@ function App() {
           <Route path="/location" element={<Location />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/payment" element={<Payment />} />
+          <Route path="/help" element={<HelpPage />} />
         </Routes>
       </Layout>
     </Router>

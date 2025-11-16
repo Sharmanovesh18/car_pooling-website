@@ -46,7 +46,7 @@ function Navbar() {
         <Link to="/dashboard">Rides</Link>
         <Link to="/reviews">Reviews</Link>
         <Link to="#">Offers</Link>
-        <Link to="#">Help</Link>
+        <Link to="/help">Help</Link>
         <Link to="#">Contact</Link>
         <Link to="/location">Location</Link>
         {/* <Link to="/profile">Profile</Link> */}
