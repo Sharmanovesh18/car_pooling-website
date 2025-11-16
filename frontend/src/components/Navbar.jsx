@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Navbar.css";
-// import { useState } from "react";
 import AuthModal from "./AuthModal";
 
 function Navbar() {
@@ -18,7 +17,7 @@ function Navbar() {
       setCurrentUser(updatedUser);
     };
 
-    window.addEventListener("auth-changed", handleAuthChange);
+    // window.addEventListener("auth-changed", handleAuthChange);
 
     return () => {
       window.removeEventListener("auth-changed", handleAuthChange);
@@ -45,11 +44,10 @@ function Navbar() {
         <Link to="/">Home</Link>
         <Link to="/dashboard">Rides</Link>
         <Link to="/reviews">Reviews</Link>
-        <Link to="#">Offers</Link>
+        <Link to="/offers">Offers</Link>
         <Link to="/help">Help</Link>
-        <Link to="#">Contact</Link>
+        <Link to="/contact">Contact</Link>
         <Link to="/location">Location</Link>
-        {/* <Link to="/profile">Profile</Link> */}
       </nav>
 
       {currentUser ? (
