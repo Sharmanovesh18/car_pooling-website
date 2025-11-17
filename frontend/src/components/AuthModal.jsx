@@ -70,7 +70,7 @@ const AuthModal = ({ isOpen, onClose }) => {
             <input name="name" value={form.name} onChange={handleChange} placeholder="Full Name" required />
           )}
           {mode === 'register' && (
-            <input name="phone" value={form.phone} onChange={handleChange} placeholder="Phone" />
+            <input name="phone" value={form.phone} onChange={handleChange} placeholder="Phone" required />
           )}
           <input name="email" value={form.email} onChange={handleChange} placeholder="Email" type="email" required />
           <input name="password" value={form.password} onChange={handleChange} placeholder="Password" type="password" required />

@@ -7,12 +7,12 @@ import Loader from "./components/Loader";
 import DashBoard from "./components/DashBoard";
 import { ErrorBoundary } from "react-error-boundary";
 import ErrorFallback from "./components/ErrorFallback";
-import Footer from "./components/Footer";
+// import Footer from "./components/Footer";
 import ReviewPage from "./components/ReviewPage";
 import Location from "./components/MapPage";
 import ChatSupport from "./components/chatbot"; 
 import CtaStyles from "./components/Download"; 
-import DiscountCTA from "./components/Animation";
+// import DiscountCTA from "./components/Animation";
 import Profile from "./components/Profile";
 import Payment from "./components/Payment";
 import HelpPage from "./components/HelpPage";
@@ -22,7 +22,6 @@ function Layout({ children }) {
   const location = useLocation();
   const hideFooterAndCTA = ["/register", "/reviews", "/location"];
 
-  const shouldHide = hideFooterAndCTA.includes(location.pathname);
 
   return (
     <>
@@ -33,12 +32,7 @@ function Layout({ children }) {
 
       {/* Chat Support always visible */}
       <ChatSupport />
-      {!shouldHide && (
-        <>
-          <DiscountCTA />
-          <Footer />
-        </>
-      )}
+      
     </>
   );
 }

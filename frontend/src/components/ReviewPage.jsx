@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from 'axios';
 import "./ReviewPage.css";
 
 function ReviewPage() {
@@ -27,10 +28,32 @@ function ReviewPage() {
       alert("Please fill all fields and select a rating!");
       return;
     }
-    setReviews([...reviews, newReview]);
-    setNewReview({ name: "", email: "", comment: "", rating: 0 });
-    setHoverRating(0);
+    // POST to backend
+    axios.post('http://localhost:5000/api/reviews', newReview)
+      .then(res => {
+        // refresh list with new review prepended
+        fetchReviews();
+        setNewReview({ name: "", email: "", comment: "", rating: 0 });
+        setHoverRating(0);
+      })
+      .catch(err => {
+        console.error('Failed to save review', err);
+        alert('Failed to save review. Please try again.');
+      });
   };
+
+  const fetchReviews = async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/api/reviews');
+      if (res.data && res.data.reviews) setReviews(res.data.reviews);
+    } catch (err) {
+      console.error('Failed to load reviews', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchReviews();
+  }, []);
 
   return (
     <div className="review-page">

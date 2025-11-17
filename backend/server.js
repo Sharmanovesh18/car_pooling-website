@@ -15,12 +15,14 @@ import localRides from "./src/data/localRides.js";
 import Ride from "./src/models/Ride.js";
 import Booking from "./src/models/Booking.js";
 import Users from "./src/models/Users.js"; // This is the updated import
+import LegacyUser from "./models/User.js"; // Legacy/alternate user model (compat)
 
 import rideRoutes from "./src/routes/rideRoutes.js";
 import bookingRoutes from "./src/routes/bookingRoutes.js";
 import Location from "./src/models/Location.js";
 
 import userRoutes from "./routes/userRoutes.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
 import connectDB from "./config/db.js";
 
 
@@ -101,6 +103,8 @@ const seedData = async () => {
 };
 
 app.use('/api/users', userRoutes);
+// Reviews API
+app.use('/api/reviews', reviewRoutes);
 
 // Payments: create Razorpay order and verify signature
 app.post('/api/payments/create-order', async (req, res) => {
@@ -230,6 +234,10 @@ app.post("/api/auth/sync-social", mockVerifyAuth0Token, async (req, res) => {
 // User registration route (MANUAL AUTH - KEPT)
 app.post("/api/auth/register", async (req, res) => {
   const { name, email, phone, password } = req.body;
+  // Basic input validation
+  if (!name || !email || !password || !phone) {
+    return res.status(400).json({ message: 'Missing required fields: name, email, phone, password' });
+  }
   try {
     const userExists = await Users.findOne({ email }); // Changed to Users
     if (userExists) {
@@ -261,7 +269,11 @@ app.post("/api/auth/register", async (req, res) => {
     res.status(201).json({ message: "User registered successfully!", user: userProfile, token });
   } catch (err) {
     console.error("❌ Registration error:", err);
-    res.status(500).json({ message: "Server error" });
+    if (err.code === 11000) {
+      // duplicate key
+      return res.status(400).json({ message: 'Email already registered' });
+    }
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 });
 
@@ -269,24 +281,45 @@ app.post("/api/auth/register", async (req, res) => {
 app.post("/api/auth/login", async (req, res) => {
   const { email, password } = req.body;
   try {
-    const user = await Users.findOne({ email }); // Changed to Users
+    console.log('Login attempt for:', email);
+    let user = await Users.findOne({ email }); // first try main Users collection
+    let usedModel = 'Users';
+
+    // If not found, try the legacy User model (different schema/collection)
     if (!user) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      const legacy = await LegacyUser.findOne({ email });
+      if (legacy) {
+        user = legacy;
+        usedModel = 'LegacyUser';
+        console.log('Found user in legacy collection for:', email);
+      }
     }
+
+    if (!user) {
+      console.log('User not found in any collection:', email);
+      return res.status(400).json({ message: 'Invalid email or password' });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      console.log('Password mismatch for user (model=' + usedModel + '):', email);
+      return res.status(400).json({ message: 'Invalid email or password' });
     }
-    const token = jwt.sign({ id: user._id, role: user.app_role }, JWT_SECRET, {
-      expiresIn: "1h",
+
+    const token = jwt.sign({ id: user._id, role: user.app_role || 'Passenger' }, JWT_SECRET, {
+      expiresIn: '1h',
     });
+
+    // Normalize name field across different models
+    const displayName = user.name || [user.given_name, user.family_name].filter(Boolean).join(' ') || '';
+
     res.status(200).json({
-      message: "Login successful!",
+      message: 'Login successful!',
       user: {
         id: user._id,
-        name: user.name,
+        name: displayName,
         email: user.email,
-        role: user.app_role,
+        role: user.app_role || user.role || 'Passenger',
       },
       token,
     });
