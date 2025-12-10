@@ -295,5 +295,19 @@ body {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
 }
 .inputText {
-    color: white;
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid #d1d5db; /* tailwind gray-300 */
+  padding: 0.75rem;
+  border-radius: 9999px; /* rounded-full */
+}
+.inputText::placeholder {
+  color: #6b7280; /* tailwind gray-500 */
+  opacity: 1;
+}
+
+/* Ensure inputs inside dashboard container use the same style */
+#dashboard-content .inputText {
+  background: #ffffff !important;
+  color: #000000 !important;
 }

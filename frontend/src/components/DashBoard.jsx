@@ -245,7 +245,7 @@ const DashBoard = () => {
             placeholder="Search starts location..."
             value={start}
             onChange={(e) => setStart(e.target.value)}
-            className="inputText flex-1 font-white min-w-40 p-3 bg-gray-500 border border-gray-400 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="inputText flex-1 min-w-40 focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
           <span className="text-3xl text-gray-500 cursor-pointer transition-transform hover:rotate-180" onClick={() => {
             setStart(destination);
@@ -256,7 +256,7 @@ const DashBoard = () => {
             placeholder="Search destination..."
             value={destination}
             onChange={(e) => setDestination(e.target.value)}
-            className="inputText flex-1 min-w-40 p-3 bg-gray-500 font-gray-700 border border-gray-400 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="inputText flex-1 min-w-40 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <input
             type="date"
@@ -265,7 +265,7 @@ const DashBoard = () => {
             onChange={(e) => setDate(e.target.value)}
             min={todayDate}
             required
-            className="inputText flex-1 bg-gray-500 font-gray-700 min-w-40 p-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="inputText flex-1 min-w-40 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <input
             type="time"
@@ -273,7 +273,7 @@ const DashBoard = () => {
             value={time}
             onChange={(e) => setTime(e.target.value)}
             required
-            className="inputText flex-1 bg-gray-500 font-gray-700 min-w-40 p-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="inputText flex-1 min-w-40 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button onClick={handleSearch} className="bg-blue-600 text-white font-bold py-3 px-8 rounded-full shadow-md transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
             Search
